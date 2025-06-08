@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mvn:*)",
+      "Bash(rg:*)",
+      "Bash(/home/ryoyuu0114/.nvm/versions/node/v22.16.0/lib/node_modules/@anthropic-ai/claude-code/vendor/ripgrep/x64-linux/rg -n \"EffectUtils\\.broadcastEffectMessage|broadcastEffectMessage\" /mnt/c/Users/plane/IdeaProjects/HardCoreTest20250608/src/main/java/magia/box/example/hardCoreTest20250608/items/effects/)",
+      "Bash(/home/ryoyuu0114/.nvm/versions/node/v22.16.0/lib/node_modules/@anthropic-ai/claude-code/vendor/ripgrep/x64-linux/rg -n \"EffectUtils\\.broadcastEffectMessage\" /mnt/c/Users/plane/IdeaProjects/HardCoreTest20250608/src/)",
+      "Bash(mkdir:*)",
+      "Bash(mv:*)",
+      "Bash(find:*)",
+      "Bash(rmdir:*)",
+      "Bash(sed:*)",
+      "Bash(for:*)",
+      "Bash(do sed -i 's/import magia\\.box\\.example\\.hardCoreTest20250608\\.HardCoreTest20250608;/import magia.box.example.hardCoreTest20250608.core.ItemRegistryAccessor;/g' \"$file\")",
+      "Bash(done)"
+    ],
+    "deny": []
+  }
+}

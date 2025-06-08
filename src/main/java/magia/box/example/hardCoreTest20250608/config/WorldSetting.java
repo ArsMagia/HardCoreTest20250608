@@ -25,6 +25,7 @@ public class WorldSetting {
         hardcore.setGameRule(GameRule.DISABLE_PLAYER_MOVEMENT_CHECK, true);
         hardcore.setGameRule(GameRule.DISABLE_ELYTRA_MOVEMENT_CHECK, true);
         hardcore.setGameRule(GameRule.NATURAL_REGENERATION, false);
+        hardcore.setGameRule(GameRule.DO_IMMEDIATE_RESPAWN, true);
 
 
 

@@ -1,0 +1,8 @@
+# HardCore Test Plugin Configuration
+# Plugin settings for custom Minecraft Multiplayer Hardcore
+
+# Plugin enabled/disabled
+enabled: true
+
+# Debug mode
+debug: false

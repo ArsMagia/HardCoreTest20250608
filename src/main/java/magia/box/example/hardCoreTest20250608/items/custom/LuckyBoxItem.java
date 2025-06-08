@@ -1,11 +1,15 @@
-package magia.box.example.hardCoreTest20250608.items;
+package magia.box.example.hardCoreTest20250608.items.custom;
 
-import magia.box.example.hardCoreTest20250608.items.effects.*;
-import magia.box.example.hardCoreTest20250608.items.effects.lucky.*;
-import magia.box.example.hardCoreTest20250608.items.effects.unlucky.*;
-import static magia.box.example.hardCoreTest20250608.items.effects.unlucky.SimpleUnluckyEffects.*;
-import static magia.box.example.hardCoreTest20250608.items.effects.unlucky.MoreUnluckyEffects.*;
-import static magia.box.example.hardCoreTest20250608.items.effects.unlucky.FinalUnluckyEffects.*;
+import magia.box.example.hardCoreTest20250608.items.core.AbstractCustomItemV2;
+import magia.box.example.hardCoreTest20250608.items.core.ItemRarity;
+import magia.box.example.hardCoreTest20250608.effects.*;
+import magia.box.example.hardCoreTest20250608.effects.lucky.*;
+import magia.box.example.hardCoreTest20250608.effects.unlucky.*;
+import static magia.box.example.hardCoreTest20250608.effects.unlucky.SimpleUnluckyEffects.*;
+import static magia.box.example.hardCoreTest20250608.effects.unlucky.MoreUnluckyEffects.*;
+import static magia.box.example.hardCoreTest20250608.effects.unlucky.FinalUnluckyEffects.*;
+import magia.box.example.hardCoreTest20250608.effects.EffectConstants;
+import magia.box.example.hardCoreTest20250608.effects.EffectUtils;
 import org.bukkit.*;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -13,7 +17,10 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Random;
+import java.util.UUID;
 
 public class LuckyBoxItem extends AbstractCustomItemV2 {
 
@@ -23,6 +30,7 @@ public class LuckyBoxItem extends AbstractCustomItemV2 {
 
     private final Random random = new Random();
     private final EffectRegistry effectRegistry;
+    private static final Map<UUID, Long> lastActivation = new HashMap<>();
 
     public LuckyBoxItem(JavaPlugin plugin) {
         super(plugin, builder("lucky_box", "ラッキーボックス")
@@ -54,6 +62,7 @@ public class LuckyBoxItem extends AbstractCustomItemV2 {
         effectRegistry.registerEffect("cloud_bridge", new CloudBridgeEffect(plugin));
         effectRegistry.registerEffect("gravity_well", new GravityWellEffect(plugin));
         effectRegistry.registerEffect("plant_growth_wave", new PlantGrowthWaveEffect(plugin));
+        effectRegistry.registerEffect("temporary_glass_platform", new TemporaryGlassPlatformEffect(plugin));
         
         // 変身・能力系ラッキー効果
         effectRegistry.registerEffect("invisibility_master", new InvisibilityMasterEffect(plugin));
@@ -69,6 +78,9 @@ public class LuckyBoxItem extends AbstractCustomItemV2 {
         effectRegistry.registerEffect("lone_sword_reward", new LoneSwordRewardEffect(plugin));
         effectRegistry.registerEffect("phantom_blade_reward", new PhantomBladeRewardEffect(plugin));
         effectRegistry.registerEffect("shuffle_item_reward", new ShuffleItemRewardEffect(plugin));
+        effectRegistry.registerEffect("enhanced_pickaxe_reward", new EnhancedPickaxeRewardEffect(plugin));
+        effectRegistry.registerEffect("player_tracking_compass_reward", new PlayerTrackingCompassRewardEffect(plugin));
+        effectRegistry.registerEffect("special_multi_tool_reward", new SpecialMultiToolRewardEffect(plugin));
         effectRegistry.registerEffect("luckybox_distribution", new LuckyBoxDistributionEffect(plugin));
         
         // 追加ラッキー効果
@@ -76,15 +88,25 @@ public class LuckyBoxItem extends AbstractCustomItemV2 {
         effectRegistry.registerEffect("instant_mining", new InstantMiningEffect(plugin));
         effectRegistry.registerEffect("auto_build", new AutoBuildEffect(plugin));
         effectRegistry.registerEffect("multi_drop", new MultiDropEffect(plugin));
+        effectRegistry.registerEffect("hotbar_tool_enchant_rare", new HotbarToolEnchantRareEffect(plugin));
+        effectRegistry.registerEffect("hotbar_tool_enchant_epic", new HotbarToolEnchantEpicEffect(plugin));
         
         // ポーション系ラッキー効果
         effectRegistry.registerEffect("random_potion_lucky", new RandomPotionLuckyEffect(plugin));
         effectRegistry.registerEffect("random_buff_potion", new RandomBuffPotionEffect(plugin));
         effectRegistry.registerEffect("multi_buff_combination", new MultiBuffCombinationEffect(plugin));
         effectRegistry.registerEffect("permanent_luck", new PermanentLuckEffect(plugin));
+        effectRegistry.registerEffect("debuff_cleanse", new DebuffCleanseEffect(plugin));
         
         // 体力増減系ラッキー効果
         effectRegistry.registerEffect("health_boost", new HealthBoostEffect(plugin));
+        
+        // 特殊移動系ラッキー効果
+        effectRegistry.registerEffect("malphite_ult", new MalphiteUltEffect(plugin));
+        effectRegistry.registerEffect("egg_taxi", new EggTaxiEffect(plugin));
+        
+        // アイテム獲得系ラッキー効果
+        effectRegistry.registerEffect("item_theft", new ItemTheftEffect(plugin));
         
         // 基本ラッキー効果
         effectRegistry.registerEffect("speed", new SpeedLuckyEffect(plugin));
@@ -102,12 +124,20 @@ public class LuckyBoxItem extends AbstractCustomItemV2 {
         
         // アイテム・資源系アンラッキー効果
         effectRegistry.registerEffect("item_scatter", new ItemScatterEffect(plugin));
+        effectRegistry.registerEffect("item_scatter_chaos", new ItemScatterChaosEffect(plugin));
         
         // ポーション系アンラッキー効果
         effectRegistry.registerEffect("random_potion_unlucky", new RandomPotionUnluckyEffect(plugin));
         
         // 体力増減系アンラッキー効果
         effectRegistry.registerEffect("health_reduction", new HealthReductionEffect(plugin));
+        
+        // 危険系アンラッキー効果
+        effectRegistry.registerEffect("potion_rain", new PotionRainEffect(plugin));
+        effectRegistry.registerEffect("mob_speed_boost", new MobSpeedBoostEffect(plugin));
+        effectRegistry.registerEffect("flame_field", new FlameFieldEffect(plugin));
+        effectRegistry.registerEffect("spider_web_powder_snow_trap", new SpiderWebPowderSnowTrapEffect(plugin));
+        effectRegistry.registerEffect("bomb_throw", new BombThrowEffect(plugin));
         
         // 基本アンラッキー効果
         effectRegistry.registerEffect("slowness", new SlownessUnluckyEffect(plugin));
@@ -189,13 +219,32 @@ public class LuckyBoxItem extends AbstractCustomItemV2 {
         effectRegistry.registerEffect("misfortune", createUnluckVariant(plugin));
         effectRegistry.registerEffect("darkness_veil", createDarknessVariant(plugin));
     }
+    
+    public EffectRegistry getEffectRegistry() {
+        return effectRegistry;
+    }
+    
+    /**
+     * ラッキー/アンラッキー判定を行う
+     * @return ラッキーの場合true
+     */
+    private boolean determineIsLucky() {
+        return random.nextDouble() < (EffectConstants.LUCKY_CHANCE_PERCENT / 100.0);
+    }
 
     @EventHandler
     public void onPlayerInteract(PlayerInteractEvent event) {
         Player player = event.getPlayer();
         ItemStack item = player.getInventory().getItemInMainHand();
 
-        if (!event.getAction().toString().contains("RIGHT_CLICK")) {
+        if (event.getAction() != org.bukkit.event.block.Action.RIGHT_CLICK_AIR && 
+            event.getAction() != org.bukkit.event.block.Action.RIGHT_CLICK_BLOCK) {
+            return;
+        }
+        
+        // クールダウンチェック
+        if (EffectUtils.checkCooldown(player, lastActivation.get(player.getUniqueId()), 
+                EffectConstants.LUCKY_BOX_COOLDOWN_MS, "ラッキーボックス")) {
             return;
         }
 
@@ -205,6 +254,9 @@ public class LuckyBoxItem extends AbstractCustomItemV2 {
 
         event.setCancelled(true);
 
+        // クールダウンを設定（実際の処理の前に設定）
+        lastActivation.put(player.getUniqueId(), System.currentTimeMillis());
+
         // アイテムを1つ消費
         if (item.getAmount() > 1) {
             item.setAmount(item.getAmount() - 1);
@@ -212,8 +264,8 @@ public class LuckyBoxItem extends AbstractCustomItemV2 {
             player.getInventory().setItemInMainHand(null);
         }
 
-        // 50%の確率でラッキー/アンラッキー判定
-        boolean isLucky = random.nextBoolean();
+        // ラッキー/アンラッキー判定
+        boolean isLucky = determineIsLucky();
 
         player.sendMessage(USE_MESSAGE);
 
@@ -237,10 +289,7 @@ public class LuckyBoxItem extends AbstractCustomItemV2 {
         LuckyEffect effect = effectRegistry.getRandomLucky();
         if (effect != null) {
             String effectDescription = effect.apply(player);
-            
-            Bukkit.broadcastMessage(ChatColor.GOLD + "✨ " + ChatColor.YELLOW + player.getName() + 
-                    ChatColor.GRAY + " がラッキーボックスで " + ChatColor.GREEN + effectDescription + 
-                    ChatColor.GRAY + " を引き当てました！");
+            EffectUtils.broadcastEffectMessage(player, effectDescription, effect.getRarity(), true);
         }
     }
 
@@ -257,10 +306,7 @@ public class LuckyBoxItem extends AbstractCustomItemV2 {
         LuckyEffect effect = effectRegistry.getRandomUnlucky();
         if (effect != null) {
             String effectDescription = effect.apply(player);
-            
-            Bukkit.broadcastMessage(ChatColor.DARK_GRAY + "💀 " + ChatColor.YELLOW + player.getName() + 
-                    ChatColor.GRAY + " がラッキーボックスで " + ChatColor.RED + effectDescription + 
-                    ChatColor.GRAY + " を引いてしまいました...");
+            EffectUtils.broadcastEffectMessage(player, effectDescription, effect.getRarity(), false);
         }
     }
 }

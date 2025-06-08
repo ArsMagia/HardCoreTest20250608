@@ -6,4 +6,10 @@ description: For custom Minecraft Mutiplayer Hardcore
 
 commands:
   plo:
+  lucky:
+    description: ラッキーボックスを取得、効果をテスト、または効果一覧を表示します
+    usage: /lucky [数量|lucky|unlucky|list]
+  custom:
+    description: カスタムアイテム一覧を表示します
+    usage: /custom
 
