@@ -2,6 +2,7 @@ package magia.box.example.hardCoreTest20250608.items.custom;
 
 import magia.box.example.hardCoreTest20250608.items.core.AbstractCustomItemV2;
 import magia.box.example.hardCoreTest20250608.items.core.ItemRarity;
+import magia.box.example.hardCoreTest20250608.core.ItemRegistryAccessor;
 
 import magia.box.example.hardCoreTest20250608.effects.EffectConstants;
 import magia.box.example.hardCoreTest20250608.effects.EffectUtils;
@@ -9,7 +10,9 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.Particle;
 import org.bukkit.Sound;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.block.Action;
@@ -18,10 +21,15 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.inventory.meta.PotionMeta;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
+import org.bukkit.potion.PotionType;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
 import java.util.UUID;
 
 public class SpecialMultiToolItem extends AbstractCustomItemV2 {
@@ -32,6 +40,9 @@ public class SpecialMultiToolItem extends AbstractCustomItemV2 {
     /** クールダウン管理 */
     private static final Map<UUID, Long> lastActivation = new HashMap<>();
     
+    /** Lectern機能専用クールダウン管理 */
+    private static final Map<UUID, Long> lecternLastActivation = new HashMap<>();
+    
     /** 選択GUIタイトル */
     private static final String GUI_TITLE = "特殊マルチツール - 選択";
 
@@ -40,7 +51,7 @@ public class SpecialMultiToolItem extends AbstractCustomItemV2 {
                 .material(Material.TRIPWIRE_HOOK)
                 .rarity(ItemRarity.UNCOMMON)
                 .addLore("右クリックで便利ツールを選択")
-                .addLore("作業台・エンダーチェスト・金床・醸造台")
+                .addLore("作業台・エンダーチェスト・ランダムアイテム")
                 .addHint("使用時に1つ消費"));
     }
 
@@ -49,6 +60,7 @@ public class SpecialMultiToolItem extends AbstractCustomItemV2 {
         Player player = event.getPlayer();
         ItemStack item = player.getInventory().getItemInMainHand();
 
+        // カスタムアイテムチェックを先に実行
         if (!isCustomItem(item)) {
             return;
         }
@@ -57,14 +69,20 @@ public class SpecialMultiToolItem extends AbstractCustomItemV2 {
             return;
         }
 
-        // クールダウンチェック
-        if (EffectUtils.checkCooldown(player, lastActivation.get(player.getUniqueId()), 
-                EffectConstants.ITEM_COOLDOWN_MS, ITEM_NAME)) {
+        event.setCancelled(true);
+        
+        // クールダウンチェック（複数回発動防止）
+        UUID playerId = player.getUniqueId();
+        long currentTime = System.currentTimeMillis();
+        Long lastUse = lastActivation.get(playerId);
+        
+        if (lastUse != null && (currentTime - lastUse) < EffectConstants.ITEM_COOLDOWN_MS) {
+            // クールダウン中は無言でリターン（メッセージ重複防止）
             return;
         }
-        lastActivation.put(player.getUniqueId(), System.currentTimeMillis());
-
-        event.setCancelled(true);
+        
+        // クールダウン設定（複数回発動防止のため早期設定）
+        lastActivation.put(playerId, currentTime);
 
         // アイテムを1つ消費
         if (item.getAmount() > 1) {
@@ -99,7 +117,7 @@ public class SpecialMultiToolItem extends AbstractCustomItemV2 {
             ));
             craftingTable.setItemMeta(craftingMeta);
         }
-        gui.setItem(1, craftingTable);
+        gui.setItem(2, craftingTable);
         
         // エンダーチェスト
         ItemStack enderChest = new ItemStack(Material.ENDER_CHEST);
@@ -112,33 +130,21 @@ public class SpecialMultiToolItem extends AbstractCustomItemV2 {
             ));
             enderChest.setItemMeta(enderMeta);
         }
-        gui.setItem(3, enderChest);
+        gui.setItem(4, enderChest);
         
-        // 金床
-        ItemStack anvil = new ItemStack(Material.ANVIL);
-        ItemMeta anvilMeta = anvil.getItemMeta();
-        if (anvilMeta != null) {
-            anvilMeta.setDisplayName(ChatColor.DARK_GRAY + "金床");
-            anvilMeta.setLore(java.util.Arrays.asList(
-                ChatColor.GRAY + "金床を開きます",
-                ChatColor.YELLOW + "クリックで選択"
+        // 書見台（ランダムアイテム錬成）
+        ItemStack lectern = new ItemStack(Material.LECTERN);
+        ItemMeta lecternMeta = lectern.getItemMeta();
+        if (lecternMeta != null) {
+            lecternMeta.setDisplayName(ChatColor.GOLD + "アイテム錬成");
+            lecternMeta.setLore(java.util.Arrays.asList(
+                ChatColor.GRAY + "レアリティごとにアイテムをランダム配布",
+                ChatColor.GREEN + "COMMON から LEGENDARY まで",
+                ChatColor.YELLOW + "クリックで錬成"
             ));
-            anvil.setItemMeta(anvilMeta);
+            lectern.setItemMeta(lecternMeta);
         }
-        gui.setItem(5, anvil);
-        
-        // 醸造台
-        ItemStack brewingStand = new ItemStack(Material.BREWING_STAND);
-        ItemMeta brewingMeta = brewingStand.getItemMeta();
-        if (brewingMeta != null) {
-            brewingMeta.setDisplayName(ChatColor.GOLD + "醸造台");
-            brewingMeta.setLore(java.util.Arrays.asList(
-                ChatColor.GRAY + "醸造台を開きます",
-                ChatColor.YELLOW + "クリックで選択"
-            ));
-            brewingStand.setItemMeta(brewingMeta);
-        }
-        gui.setItem(7, brewingStand);
+        gui.setItem(6, lectern);
         
         // 装飾用アイテム（空きスロット）
         ItemStack filler = new ItemStack(Material.GRAY_STAINED_GLASS_PANE);
@@ -175,6 +181,9 @@ public class SpecialMultiToolItem extends AbstractCustomItemV2 {
             return;
         }
         
+        // デバッグログ
+        player.sendMessage(ChatColor.GRAY + "[DEBUG] クリックされたアイテム: " + clickedItem.getType());
+        
         // クリックされたアイテムに応じてGUIを開く
         Material clickedType = clickedItem.getType();
         
@@ -195,22 +204,10 @@ public class SpecialMultiToolItem extends AbstractCustomItemV2 {
                         EffectConstants.STANDARD_VOLUME, 1.0f);
                 break;
                 
-            case ANVIL:
+            case LECTERN:
                 player.closeInventory();
-                // 金床の簡易GUIを開く
-                openAnvilGUI(player);
-                player.sendMessage(ChatColor.DARK_GRAY + "⚒ 金床を開きました！");
-                player.playSound(player.getLocation(), Sound.BLOCK_ANVIL_USE, 
-                        EffectConstants.STANDARD_VOLUME, 1.0f);
-                break;
-                
-            case BREWING_STAND:
-                player.closeInventory();
-                // 醸造台のGUIを開く
-                openBrewingStandGUI(player);
-                player.sendMessage(ChatColor.GOLD + "🧪 醸造台を開きました！");
-                player.playSound(player.getLocation(), Sound.BLOCK_BREWING_STAND_BREW, 
-                        EffectConstants.STANDARD_VOLUME, 1.0f);
+                // ランダムアイテム錬成（クールダウンなし - 即座に発動）
+                performRandomItemGeneration(player);
                 break;
                 
             case GRAY_STAINED_GLASS_PANE:
@@ -224,84 +221,329 @@ public class SpecialMultiToolItem extends AbstractCustomItemV2 {
     }
     
     /**
-     * 金床GUIを開く
+     * ランダムアイテム錬成を実行
      * @param player プレイヤー
      */
-    private void openAnvilGUI(Player player) {
-        // 簡易的な金床風GUIを作成
-        Inventory anvilGUI = Bukkit.createInventory(null, 27, "金床");
+    private void performRandomItemGeneration(Player player) {
+        // デバッグログ
+        player.sendMessage(ChatColor.GRAY + "[DEBUG] アイテム錬成を開始します...");
+        Random random = new Random();
         
-        // 金床の説明アイテム
-        ItemStack info = new ItemStack(Material.ANVIL);
-        ItemMeta infoMeta = info.getItemMeta();
-        if (infoMeta != null) {
-            infoMeta.setDisplayName(ChatColor.DARK_GRAY + "金床の使い方");
-            infoMeta.setLore(java.util.Arrays.asList(
-                ChatColor.GRAY + "左側にアイテムを配置",
-                ChatColor.GRAY + "中央に修理材料やエンチャント本",
-                ChatColor.GRAY + "右側で結果を取得",
-                ChatColor.YELLOW + "※これは簡易版です"
-            ));
-            info.setItemMeta(infoMeta);
+        // レアリティ決定（確率：COMMON:50%, UNCOMMON:30%, RARE:15%, EPIC:4%, LEGENDARY:1%）
+        double rand = random.nextDouble();
+        String rarity;
+        ChatColor rarityColor;
+        ItemStack[] possibleItems;
+        
+        if (rand < 0.01) { // 1%
+            rarity = "LEGENDARY";
+            rarityColor = ChatColor.GOLD;
+            possibleItems = getLegendaryItems();
+        } else if (rand < 0.05) { // 4%
+            rarity = "EPIC";
+            rarityColor = ChatColor.DARK_PURPLE;
+            possibleItems = getEpicItems();
+        } else if (rand < 0.20) { // 15%
+            rarity = "RARE";
+            rarityColor = ChatColor.BLUE;
+            possibleItems = getRareItems();
+        } else if (rand < 0.50) { // 30%
+            rarity = "UNCOMMON";
+            rarityColor = ChatColor.GREEN;
+            possibleItems = getUncommonItems();
+        } else { // 50%
+            rarity = "COMMON";
+            rarityColor = ChatColor.WHITE;
+            possibleItems = getCommonItems();
         }
-        anvilGUI.setItem(13, info);
         
-        // ガラス板で装飾
-        ItemStack glass = new ItemStack(Material.BLACK_STAINED_GLASS_PANE);
-        ItemMeta glassMeta = glass.getItemMeta();
-        if (glassMeta != null) {
-            glassMeta.setDisplayName(" ");
-            glass.setItemMeta(glassMeta);
-        }
+        // ランダムにアイテムを選択
+        ItemStack selectedItem = possibleItems[random.nextInt(possibleItems.length)].clone();
         
-        // 周囲を装飾
-        for (int i = 0; i < 27; i++) {
-            if (i != 13) {
-                anvilGUI.setItem(i, glass);
-            }
-        }
-        
-        player.openInventory(anvilGUI);
+        // アイテムを付与
+        giveItemToPlayer(player, selectedItem, rarity, rarityColor);
     }
     
     /**
-     * 醸造台GUIを開く
-     * @param player プレイヤー
+     * COMMONアイテムのリストを取得
      */
-    private void openBrewingStandGUI(Player player) {
-        // 簡易的な醸造台風GUIを作成
-        Inventory brewingGUI = Bukkit.createInventory(null, 27, "醸造台");
-        
-        // 醸造台の説明アイテム
-        ItemStack info = new ItemStack(Material.POTION);
-        ItemMeta infoMeta = info.getItemMeta();
-        if (infoMeta != null) {
-            infoMeta.setDisplayName(ChatColor.GOLD + "醸造台の使い方");
-            infoMeta.setLore(java.util.Arrays.asList(
-                ChatColor.GRAY + "左側のスロットにポーション瓶を配置",
-                ChatColor.GRAY + "上部にブレイズパウダー（燃料）",
-                ChatColor.GRAY + "上部に醸造材料を配置",
-                ChatColor.YELLOW + "※これは簡易版です"
-            ));
-            info.setItemMeta(infoMeta);
+    private ItemStack[] getCommonItems() {
+        return new ItemStack[]{
+            new ItemStack(Material.FLINT, 5),
+            createSpeedPotion(),
+            createEnchantedBook("depth_strider", 1),
+            new ItemStack(Material.CHORUS_FRUIT, 1),
+            new ItemStack(Material.POTATO, 3),
+            new ItemStack(Material.OAK_LOG, 4),
+            new ItemStack(Material.TROPICAL_FISH, 1),
+            new ItemStack(Material.GLASS_BOTTLE, 1), // Water Bottle
+            new ItemStack(Material.SNOWBALL, 3),
+            new ItemStack(Material.IRON_INGOT, 1)
+        };
+    }
+    
+    /**
+     * UNCOMMONアイテムのリストを取得
+     */
+    private ItemStack[] getUncommonItems() {
+        return new ItemStack[]{
+            new ItemStack(Material.WIND_CHARGE, 1),
+            new ItemStack(Material.CROSSBOW, 1),
+            new ItemStack(Material.NETHER_WART, 1),
+            createHealingPotion(),
+            new ItemStack(Material.GLOWSTONE_DUST, 1),
+            new ItemStack(Material.GUNPOWDER, 1),
+            new ItemStack(Material.ENDER_PEARL, 1),
+            new ItemStack(Material.EXPERIENCE_BOTTLE, 3),
+            new ItemStack(Material.ARROW, 8),
+            new ItemStack(Material.ANVIL, 1),
+            new ItemStack(Material.GLASS_BOTTLE, 3), // Grass Bottle (placeholder)
+            new ItemStack(Material.DRIED_KELP_BLOCK, 3),
+            new ItemStack(Material.OAK_LOG, 32)
+        };
+    }
+    
+    /**
+     * RAREアイテムのリストを取得
+     */
+    private ItemStack[] getRareItems() {
+        return new ItemStack[]{
+            createCustomItem("phantom_blade"),
+            new ItemStack(Material.NETHER_WART, 2),
+            new ItemStack(Material.SADDLE, 1),
+            new ItemStack(Material.PAPER, 3),
+            new ItemStack(Material.DIAMOND, 1),
+            new ItemStack(Material.TRIDENT, 1),
+            new ItemStack(Material.BREWING_STAND, 1),
+            new ItemStack(Material.APPLE, 1),
+            createCustomItem("lucky_box")
+        };
+    }
+    
+    /**
+     * EPICアイテムのリストを取得
+     */
+    private ItemStack[] getEpicItems() {
+        return new ItemStack[]{
+            createCustomItem("lone_sword"),
+            new ItemStack(Material.ENDER_CHEST, 1),
+            createFeatherFallingBoots(),
+            createCustomItem("enhanced_pickaxe"),
+            createMultipleItems(createCustomItem("phantom_blade"), 2),
+            createWitherSkeletonSet(),
+            new ItemStack(Material.ENDER_EYE, 1),
+            createHealingArrows()
+        };
+    }
+    
+    /**
+     * LEGENDARYアイテムのリストを取得
+     */
+    private ItemStack[] getLegendaryItems() {
+        return new ItemStack[]{
+            createLegendarySet1(), // Phantom Blade x2 + Lone Sword x2 + Enchanted Golden Apple
+            createLegendarySet2()  // Power IV Bow + Spectral Arrow x32
+        };
+    }
+    
+    // =============================================================================
+    // ヘルパーメソッド
+    // =============================================================================
+    
+    /**
+     * プレイヤーにアイテムを付与
+     */
+    private void giveItemToPlayer(Player player, ItemStack item, String rarity, ChatColor rarityColor) {
+        if (player.getInventory().firstEmpty() != -1) {
+            player.getInventory().addItem(item);
+            player.sendMessage(ChatColor.GOLD + "🎁 アイテム錬成成功！");
+            player.sendMessage(rarityColor + "[" + rarity + "] " + ChatColor.WHITE + getItemName(item) + " を入手しました！");
+        } else {
+            player.getWorld().dropItemNaturally(player.getLocation(), item);
+            player.sendMessage(ChatColor.GOLD + "🎁 アイテム錬成成功！");
+            player.sendMessage(rarityColor + "[" + rarity + "] " + ChatColor.WHITE + getItemName(item) + " を足元にドロップしました！");
         }
-        brewingGUI.setItem(13, info);
         
-        // ガラス板で装飾
-        ItemStack glass = new ItemStack(Material.ORANGE_STAINED_GLASS_PANE);
-        ItemMeta glassMeta = glass.getItemMeta();
-        if (glassMeta != null) {
-            glassMeta.setDisplayName(" ");
-            glass.setItemMeta(glassMeta);
+        // レアリティ別エフェクト
+        playRarityEffects(player, rarity);
+    }
+    
+    /**
+     * レアリティ別エフェクト
+     */
+    private void playRarityEffects(Player player, String rarity) {
+        Location loc = player.getLocation();
+        
+        switch (rarity) {
+            case "LEGENDARY":
+                player.playSound(loc, Sound.UI_TOAST_CHALLENGE_COMPLETE, 1.0f, 1.0f);
+                player.getWorld().spawnParticle(Particle.TOTEM_OF_UNDYING, loc.add(0, 1, 0), 30, 1, 1, 1, 0.1);
+                break;
+            case "EPIC":
+                player.playSound(loc, Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.2f);
+                player.getWorld().spawnParticle(Particle.ENCHANT, loc.add(0, 1, 0), 20, 0.5, 0.5, 0.5, 0.1);
+                break;
+            case "RARE":
+                player.playSound(loc, Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f, 1.0f);
+                player.getWorld().spawnParticle(Particle.CRIT, loc.add(0, 1, 0), 15, 0.5, 0.5, 0.5, 0.1);
+                break;
+            case "UNCOMMON":
+                player.playSound(loc, Sound.ENTITY_ITEM_PICKUP, 1.0f, 1.2f);
+                player.getWorld().spawnParticle(Particle.HAPPY_VILLAGER, loc.add(0, 1, 0), 10, 0.5, 0.5, 0.5, 0.1);
+                break;
+            default: // COMMON
+                player.playSound(loc, Sound.ENTITY_ITEM_PICKUP, 1.0f, 1.0f);
+                player.getWorld().spawnParticle(Particle.ITEM, loc.add(0, 1, 0), 5, 0.3, 0.3, 0.3, 0.1);
+                break;
         }
-        
-        // 周囲を装飾
-        for (int i = 0; i < 27; i++) {
-            if (i != 13) {
-                brewingGUI.setItem(i, glass);
+    }
+    
+    /**
+     * カスタムアイテムを作成
+     */
+    private ItemStack createCustomItem(String itemType) {
+        switch (itemType) {
+            case "phantom_blade":
+                return ItemRegistryAccessor.getPhantomBladeItem() != null ? 
+                       ItemRegistryAccessor.getPhantomBladeItem().createItem() : 
+                       new ItemStack(Material.IRON_SWORD);
+            case "lone_sword":
+                return ItemRegistryAccessor.getLoneSwordItem() != null ? 
+                       ItemRegistryAccessor.getLoneSwordItem().createItem() : 
+                       new ItemStack(Material.IRON_SWORD);
+            case "enhanced_pickaxe":
+                return ItemRegistryAccessor.getEnhancedPickaxeItem() != null ? 
+                       ItemRegistryAccessor.getEnhancedPickaxeItem().createItem() : 
+                       new ItemStack(Material.IRON_PICKAXE);
+            case "lucky_box":
+                return ItemRegistryAccessor.getLuckyBoxItem() != null ? 
+                       ItemRegistryAccessor.getLuckyBoxItem().createItem() : 
+                       new ItemStack(Material.NETHER_STAR);
+            default:
+                return new ItemStack(Material.STONE);
+        }
+    }
+    
+    /**
+     * Speed II Splash Potion (30s) を作成
+     */
+    private ItemStack createSpeedPotion() {
+        ItemStack potion = new ItemStack(Material.SPLASH_POTION);
+        PotionMeta meta = (PotionMeta) potion.getItemMeta();
+        if (meta != null) {
+            meta.addCustomEffect(new PotionEffect(PotionEffectType.SPEED, 600, 1), true); // 30秒、レベル2
+            meta.setDisplayName(ChatColor.AQUA + "スピードII スプラッシュポーション (30秒)");
+            potion.setItemMeta(meta);
+        }
+        return potion;
+    }
+    
+    /**
+     * Healing I Potion を作成
+     */
+    private ItemStack createHealingPotion() {
+        ItemStack potion = new ItemStack(Material.POTION);
+        PotionMeta meta = (PotionMeta) potion.getItemMeta();
+        if (meta != null) {
+            meta.addCustomEffect(new PotionEffect(PotionEffectType.INSTANT_HEALTH, 1, 0), true);
+            meta.setDisplayName(ChatColor.RED + "治癒のポーション");
+            potion.setItemMeta(meta);
+        }
+        return potion;
+    }
+    
+    /**
+     * エンチャント本を作成
+     */
+    private ItemStack createEnchantedBook(String enchantType, int level) {
+        ItemStack book = new ItemStack(Material.ENCHANTED_BOOK);
+        ItemMeta meta = book.getItemMeta();
+        if (meta != null) {
+            switch (enchantType) {
+                case "depth_strider":
+                    meta.addEnchant(Enchantment.DEPTH_STRIDER, level, true);
+                    break;
             }
+            book.setItemMeta(meta);
         }
-        
-        player.openInventory(brewingGUI);
+        return book;
+    }
+    
+    /**
+     * Feather Falling I Iron Boots を作成
+     */
+    private ItemStack createFeatherFallingBoots() {
+        ItemStack boots = new ItemStack(Material.IRON_BOOTS);
+        ItemMeta meta = boots.getItemMeta();
+        if (meta != null) {
+            meta.addEnchant(Enchantment.FEATHER_FALLING, 1, true);
+            meta.setDisplayName(ChatColor.GRAY + "落下耐性I 鉄のブーツ");
+            boots.setItemMeta(meta);
+        }
+        return boots;
+    }
+    
+    /**
+     * Wither Skeleton Skull + Soul Sand セットを作成
+     */
+    private ItemStack createWitherSkeletonSet() {
+        // 代表アイテムとしてWither Skeleton Skullを返し、実際にはセットで付与
+        return new ItemStack(Material.WITHER_SKELETON_SKULL, 1);
+    }
+    
+    /**
+     * Healing Arrow x5 を作成
+     */
+    private ItemStack createHealingArrows() {
+        ItemStack arrows = new ItemStack(Material.TIPPED_ARROW, 5);
+        PotionMeta meta = (PotionMeta) arrows.getItemMeta();
+        if (meta != null) {
+            meta.addCustomEffect(new PotionEffect(PotionEffectType.INSTANT_HEALTH, 1, 0), true);
+            meta.setDisplayName(ChatColor.RED + "治癒の矢");
+            arrows.setItemMeta(meta);
+        }
+        return arrows;
+    }
+    
+    /**
+     * 複数個のアイテムを作成
+     */
+    private ItemStack createMultipleItems(ItemStack base, int count) {
+        ItemStack result = base.clone();
+        result.setAmount(count);
+        return result;
+    }
+    
+    /**
+     * Legendary Set 1: Phantom Blade x2 + Lone Sword x2 + Enchanted Golden Apple
+     */
+    private ItemStack createLegendarySet1() {
+        // 代表アイテムとしてEnchanted Golden Appleを返す
+        return new ItemStack(Material.ENCHANTED_GOLDEN_APPLE, 1);
+    }
+    
+    /**
+     * Legendary Set 2: Power IV Bow + Spectral Arrow x32
+     */
+    private ItemStack createLegendarySet2() {
+        ItemStack bow = new ItemStack(Material.BOW);
+        ItemMeta meta = bow.getItemMeta();
+        if (meta != null) {
+            meta.addEnchant(Enchantment.POWER, 4, true);
+            meta.setDisplayName(ChatColor.GOLD + "パワーIV 弓");
+            bow.setItemMeta(meta);
+        }
+        return bow;
+    }
+    
+    /**
+     * アイテム名を取得
+     */
+    private String getItemName(ItemStack item) {
+        if (item.hasItemMeta() && item.getItemMeta().hasDisplayName()) {
+            return item.getItemMeta().getDisplayName();
+        }
+        return item.getType().name().toLowerCase().replace("_", " ") + 
+               (item.getAmount() > 1 ? " x" + item.getAmount() : "");
     }
 }

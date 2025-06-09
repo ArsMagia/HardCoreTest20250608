@@ -143,6 +143,7 @@ public class LuckyBoxItem extends AbstractCustomItemV2 {
         effectRegistry.registerEffect("slowness", new SlownessUnluckyEffect(plugin));
         effectRegistry.registerEffect("gravity_flip", new GravityFlipEffect(plugin));
         effectRegistry.registerEffect("cursed_sounds", new CursedSoundsEffect(plugin));
+        effectRegistry.registerEffect("arrow_rain", new ArrowRainEffect(plugin));
         
         // 追加アンラッキー効果 (SimpleUnluckyEffects)
         effectRegistry.registerEffect("upside_down_vision", new UpsideDownVisionEffect(plugin));
@@ -232,7 +233,7 @@ public class LuckyBoxItem extends AbstractCustomItemV2 {
         return random.nextDouble() < (EffectConstants.LUCKY_CHANCE_PERCENT / 100.0);
     }
 
-    @EventHandler
+    @EventHandler(priority = org.bukkit.event.EventPriority.NORMAL)
     public void onPlayerInteract(PlayerInteractEvent event) {
         Player player = event.getPlayer();
         ItemStack item = player.getInventory().getItemInMainHand();
@@ -242,20 +243,25 @@ public class LuckyBoxItem extends AbstractCustomItemV2 {
             return;
         }
         
-        // クールダウンチェック
-        if (EffectUtils.checkCooldown(player, lastActivation.get(player.getUniqueId()), 
-                EffectConstants.LUCKY_BOX_COOLDOWN_MS, "ラッキーボックス")) {
-            return;
-        }
-
+        // カスタムアイテムチェックを先に実行
         if (!isCustomItem(item)) {
             return;
         }
 
         event.setCancelled(true);
-
-        // クールダウンを設定（実際の処理の前に設定）
-        lastActivation.put(player.getUniqueId(), System.currentTimeMillis());
+        
+        // クールダウンチェック（複数回発動防止）
+        UUID playerId = player.getUniqueId();
+        long currentTime = System.currentTimeMillis();
+        Long lastUse = lastActivation.get(playerId);
+        
+        if (lastUse != null && (currentTime - lastUse) < EffectConstants.LUCKY_BOX_COOLDOWN_MS) {
+            // クールダウン中は無言でリターン（メッセージ重複防止）
+            return;
+        }
+        
+        // クールダウン設定（複数回発動防止のため早期設定）
+        lastActivation.put(playerId, currentTime);
 
         // アイテムを1つ消費
         if (item.getAmount() > 1) {

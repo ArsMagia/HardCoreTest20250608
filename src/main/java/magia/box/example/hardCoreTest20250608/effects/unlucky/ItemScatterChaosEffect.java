@@ -25,7 +25,7 @@ public class ItemScatterChaosEffect extends UnluckyEffectBase {
     private static final int THROW_INTERVAL_TICKS = 10; // 0.5秒間隔
     
     /** 投げる力の強さ */
-    private static final double THROW_VELOCITY = 1.5;
+    private static final double THROW_VELOCITY = 0.8;
     
     /** ランダム生成器 */
     private final Random random = new Random();
@@ -173,7 +173,7 @@ public class ItemScatterChaosEffect extends UnluckyEffectBase {
         
         Vector velocity = new Vector(
             Math.cos(angle) * Math.cos(pitch) * THROW_VELOCITY,
-            Math.sin(pitch) * THROW_VELOCITY + 0.3, // 少し上向きに
+            Math.sin(pitch) * THROW_VELOCITY + 0.2, // 控えめに上向きに
             Math.sin(angle) * Math.cos(pitch) * THROW_VELOCITY
         );
         
@@ -182,6 +182,7 @@ public class ItemScatterChaosEffect extends UnluckyEffectBase {
         Item droppedItem = world.dropItem(spawnLoc, itemStack);
         droppedItem.setVelocity(velocity);
         droppedItem.setPickupDelay(60); // 3秒間拾えない
+        droppedItem.setGlowing(true); // グロー効果を追加
         
         // 投げエフェクト
         world.spawnParticle(

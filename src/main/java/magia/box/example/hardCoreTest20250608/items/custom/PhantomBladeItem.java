@@ -41,7 +41,7 @@ public class PhantomBladeItem extends AbstractCustomItemV2 {
                 .addHint("耐久力消費: " + DURABILITY_COST));
     }
 
-    @EventHandler
+    @EventHandler(priority = org.bukkit.event.EventPriority.NORMAL)
     public void onPlayerInteract(PlayerInteractEvent event) {
         Player player = event.getPlayer();
         ItemStack item = player.getInventory().getItemInMainHand();
@@ -50,18 +50,25 @@ public class PhantomBladeItem extends AbstractCustomItemV2 {
             return;
         }
         
-        // クールダウンチェック
-        if (EffectUtils.checkCooldown(player, lastActivation.get(player.getUniqueId()), 
-                EffectConstants.ITEM_COOLDOWN_MS, ITEM_NAME)) {
-            return;
-        }
-        lastActivation.put(player.getUniqueId(), System.currentTimeMillis());
-
+        // カスタムアイテムチェックを先に実行
         if (!isCustomItem(item)) {
             return;
         }
 
         event.setCancelled(true);
+        
+        // クールダウンチェック（複数回発動防止のため先にタイムスタンプ設定）
+        UUID playerId = player.getUniqueId();
+        long currentTime = System.currentTimeMillis();
+        Long lastUse = lastActivation.get(playerId);
+        
+        if (lastUse != null && (currentTime - lastUse) < EffectConstants.ITEM_COOLDOWN_MS) {
+            // クールダウン中は無言でリターン（メッセージ重複防止）
+            return;
+        }
+        
+        // クールダウン設定（複数回発動防止）
+        lastActivation.put(playerId, currentTime);
 
         // ダッシュ効果を実行
         executeDashEffect(player);

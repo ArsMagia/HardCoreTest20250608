@@ -44,38 +44,45 @@ public class GrappleItem extends
         }
 
         Vector grapple = event.getHook().getLocation().subtract(player.getLocation()).toVector().normalize().multiply(POWER);
+        // Y軸の勢いを1/2に減少（極端な飛び方を抑制）
+        grapple.setY(grapple.getY() * 0.5);
         Entity hookedEntity = event.getHook().getHookedEntity();
 
         if (event.getState() == PlayerFishEvent.State.FISHING) {
             if (event.getHand() == null) return;
             grappling.add(uuid);
         } else if (grappling.contains(uuid)) {
+            boolean grappleSuccess = false;
+            boolean shouldShowFailMessage = false;
+            
             switch (event.getState()) {
                 case REEL_IN:
-                    if (canGrapple(event.getHook().getLocation())) {
+                    if (canGrapple(event.getHook().getLocation(), player)) {
                         player.setVelocity(player.getVelocity().add(grapple));
-                        // 成功時の音響フィードバック
-                        player.playSound(player.getLocation(), Sound.BLOCK_IRON_DOOR_OPEN, 1.0f, 1.2f);
+                        grappleSuccess = true;
                     } else {
-                        player.sendMessage(ChatColor.RED + "グラップリングできません");
+                        shouldShowFailMessage = true; // REEL_INで失敗した場合のみメッセージ表示
                     }
                     break;
                 case IN_GROUND:
                     player.setVelocity(player.getVelocity().add(grapple));
-                    // 成功時の音響フィードバック
-                    player.playSound(player.getLocation(), Sound.BLOCK_IRON_DOOR_OPEN, 1.0f, 1.2f);
+                    grappleSuccess = true;
                     break;
                 case CAUGHT_ENTITY:
-                    if (hookedEntity == null || hookedEntity.getType() != EntityType.PLAYER) break;
-                    if (hookedEntity.getType() == EntityType.PLAYER) {
+                    if (hookedEntity != null && hookedEntity.getType() == EntityType.PLAYER) {
                         player.setVelocity(player.getVelocity().add(grapple));
-                        // 成功時の音響フィードバック
-                        player.playSound(player.getLocation(), Sound.BLOCK_IRON_DOOR_OPEN, 1.0f, 1.2f);
+                        grappleSuccess = true;
                     }
                     break;
                 default:
                     break;
             }
+            
+            // 失敗メッセージは一度だけ表示（REEL_INで失敗した場合のみ）
+            if (shouldShowFailMessage) {
+                player.sendMessage(ChatColor.RED + "グラップリングできません");
+            }
+            
             grappling.remove(uuid);
         }
     }
@@ -83,44 +90,53 @@ public class GrappleItem extends
     /**
      * グラップリング可能かどうかを判定
      * @param hookLocation フックの位置
+     * @param player プレイヤー（音を鳴らすため）
      * @return グラップリング可能かどうか
      */
-    private boolean canGrapple(Location hookLocation) {
+    private boolean canGrapple(Location hookLocation, Player player) {
         World world = hookLocation.getWorld();
         if (world == null) return false;
         
         Block hookBlock = hookLocation.getBlock();
+        boolean canGrappleResult = false;
         
         // 1. 地面にしっかりと着地している場合
         if (hookBlock.getType() != Material.AIR) {
-            return true;
+            canGrappleResult = true;
         }
-        
         // 2. 水中の場合
-        if (hookBlock.getType() == Material.WATER) {
-            return true;
+        else if (hookBlock.getType() == Material.WATER) {
+            canGrappleResult = true;
         }
-        
         // 3. 近接ブロック検出（1ブロック範囲）
-        for (int x = -1; x <= 1; x++) {
-            for (int y = -1; y <= 1; y++) {
-                for (int z = -1; z <= 1; z++) {
-                    if (x == 0 && y == 0 && z == 0) continue; // 中心はスキップ
-                    
-                    Block nearbyBlock = hookLocation.clone().add(x, y, z).getBlock();
-                    
-                    // 隣接する固体ブロックがある場合はグラップリング可能
-                    if (nearbyBlock.getType() != Material.AIR && 
-                        nearbyBlock.getType() != Material.WATER &&
-                        nearbyBlock.getType().isSolid()) {
-                        return true;
+        else {
+            for (int x = -1; x <= 1; x++) {
+                for (int y = -1; y <= 1; y++) {
+                    for (int z = -1; z <= 1; z++) {
+                        if (x == 0 && y == 0 && z == 0) continue; // 中心はスキップ
+                        
+                        Block nearbyBlock = hookLocation.clone().add(x, y, z).getBlock();
+                        
+                        // 隣接する固体ブロックがある場合はグラップリング可能
+                        if (nearbyBlock.getType() != Material.AIR && 
+                            nearbyBlock.getType() != Material.WATER &&
+                            nearbyBlock.getType().isSolid()) {
+                            canGrappleResult = true;
+                            break;
+                        }
                     }
+                    if (canGrappleResult) break;
                 }
+                if (canGrappleResult) break;
             }
         }
         
-        // どの条件も満たさない場合は不可
-        return false;
+        // グラップリング可能な場合に音を鳴らす
+        if (canGrappleResult) {
+            player.playSound(player.getLocation(), Sound.BLOCK_IRON_DOOR_OPEN, 1.0f, 1.2f);
+        }
+        
+        return canGrappleResult;
     }
     
     @EventHandler

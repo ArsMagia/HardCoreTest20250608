@@ -66,7 +66,7 @@ public class BasicListener implements Listener {
             tpMessage.setColor(net.md_5.bungee.api.ChatColor.GOLD);
             tpMessage.setBold(true);
             tpMessage.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, 
-                "/tp " + player.getName() + " " + locX + " " + locY + " " + locZ));
+                "/plo tp " + locX + " " + locY + " " + locZ + " " + worldName));
             tpMessage.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, 
                 new ComponentBuilder(ChatColor.GREEN + "クリックでテレポート\n" + 
                     ChatColor.GRAY + "座標: " + worldName + " " + plo).create()));

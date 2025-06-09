@@ -35,7 +35,7 @@ public class EnhancedPickaxeItem extends AbstractCustomItemV2 {
     private static final int BREAK_RANGE = 2; // 中心から2ブロック = 5x5
     
     /** 耐久消費量 */
-    private static final int DURABILITY_COST = 5;
+    private static final int DURABILITY_COST = 15;
     
     /** 破壊可能なブロックのセット */
     private static final Set<Material> BREAKABLE_MATERIALS = Set.of(
@@ -83,11 +83,17 @@ public class EnhancedPickaxeItem extends AbstractCustomItemV2 {
         }
         
         // クールダウンチェック（短時間の二重実行防止）
-        if (EffectUtils.checkCooldown(player, lastActivation.get(player.getUniqueId()), 
-                50L, ITEM_NAME)) { // 50ms クールダウン
+        UUID playerId = player.getUniqueId();
+        long currentTime = System.currentTimeMillis();
+        Long lastUse = lastActivation.get(playerId);
+        
+        if (lastUse != null && (currentTime - lastUse) < 50L) {
+            // クールダウン中は無言でリターン（メッセージ重複防止）
             return;
         }
-        lastActivation.put(player.getUniqueId(), System.currentTimeMillis());
+        
+        // クールダウン設定（複数回発動防止のため早期設定）
+        lastActivation.put(playerId, currentTime);
         
         Block brokenBlock = event.getBlock();
         
@@ -103,6 +109,7 @@ public class EnhancedPickaxeItem extends AbstractCustomItemV2 {
      */
     private void executeAreaMining(Player player, ItemStack pickaxe, Block centerBlock) {
         int blocksDestroyed = 0;
+        int obsidianCount = 0;
         
         // 5x5x5の範囲でブロックを破壊
         for (int x = -BREAK_RANGE; x <= BREAK_RANGE; x++) {
@@ -114,6 +121,11 @@ public class EnhancedPickaxeItem extends AbstractCustomItemV2 {
                     Block targetBlock = centerBlock.getRelative(x, y, z);
                     
                     if (canBreakBlock(targetBlock)) {
+                        // 黒曜石の場合は特別処理
+                        if (targetBlock.getType() == Material.OBSIDIAN) {
+                            obsidianCount++;
+                        }
+                        
                         // ブロックを破壊してドロップ
                         targetBlock.breakNaturally(pickaxe);
                         blocksDestroyed++;
@@ -122,9 +134,23 @@ public class EnhancedPickaxeItem extends AbstractCustomItemV2 {
             }
         }
         
-        // 耐久力消費
-        if (blocksDestroyed > 0) {
-            EffectUtils.consumeDurabilityOrBreak(player, pickaxe, DURABILITY_COST, ITEM_NAME);
+        // 中心ブロックが黒曜石の場合もカウント
+        if (centerBlock.getType() == Material.OBSIDIAN) {
+            obsidianCount++;
+        }
+        
+        // 耐久力消費（黒曜石は50、他は15）
+        if (blocksDestroyed > 0 || obsidianCount > 0) {
+            int totalDurabilityCost = DURABILITY_COST + (obsidianCount * 35); // 15 + 35 = 50 per obsidian
+            EffectUtils.consumeDurabilityOrBreak(player, pickaxe, totalDurabilityCost, ITEM_NAME);
+            
+            // 残り耐久力を表示
+            displayRemainingDurability(player, pickaxe);
+            
+            // 黒曜石破壊時の特別メッセージ
+            if (obsidianCount > 0) {
+                player.sendMessage(ChatColor.DARK_PURPLE + "🔮 黒曜石 x" + obsidianCount + " を破壊！追加耐久消費: " + (obsidianCount * 35));
+            }
             
             // エフェクトとメッセージ
             player.playSound(player.getLocation(), Sound.BLOCK_STONE_BREAK, 
@@ -135,10 +161,6 @@ public class EnhancedPickaxeItem extends AbstractCustomItemV2 {
                 centerBlock.getLocation().add(0.5, 0.5, 0.5),
                 5, 2, 2, 2, 0.1
             );
-            
-            player.sendMessage(ChatColor.GOLD + ITEM_NAME + "で" + 
-                ChatColor.YELLOW + (blocksDestroyed + 1) + "個" + 
-                ChatColor.GOLD + "のブロックを破壊しました！");
         }
     }
     
@@ -153,11 +175,40 @@ public class EnhancedPickaxeItem extends AbstractCustomItemV2 {
         // 空気ブロックはスキップ
         if (material == Material.AIR) return false;
         
-        // 岩盤と黒曜石は破壊不可
-        if (material == Material.BEDROCK || material == Material.OBSIDIAN) return false;
+        // 岩盤は破壊不可（黒曜石は破壊可能）
+        if (material == Material.BEDROCK) return false;
         
         // 破壊可能なマテリアルのリストにあるか、または鉄ピッケルで破壊可能なブロック
         return BREAKABLE_MATERIALS.contains(material) || 
                material.getHardness() > 0 && material.getHardness() <= 50.0f;
+    }
+    
+    /**
+     * 残り耐久力を表示
+     * @param player プレイヤー
+     * @param item アイテム
+     */
+    private void displayRemainingDurability(Player player, ItemStack item) {
+        if (item.getItemMeta() == null) return;
+        
+        org.bukkit.inventory.meta.Damageable damageable = 
+            (org.bukkit.inventory.meta.Damageable) item.getItemMeta();
+        
+        int maxDurability = item.getType().getMaxDurability();
+        int currentDamage = damageable.getDamage();
+        int remainingDurability = maxDurability - currentDamage;
+        
+        // 耐久力に応じてメッセージの色を変更
+        ChatColor durabilityColor;
+        if (remainingDurability > maxDurability * 0.6) {
+            durabilityColor = ChatColor.GREEN;
+        } else if (remainingDurability > maxDurability * 0.3) {
+            durabilityColor = ChatColor.YELLOW;
+        } else {
+            durabilityColor = ChatColor.RED;
+        }
+        
+        player.sendMessage(ChatColor.GRAY + "残り耐久: " + durabilityColor + remainingDurability + 
+                          ChatColor.GRAY + "/" + ChatColor.WHITE + maxDurability);
     }
 }

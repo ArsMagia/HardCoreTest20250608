@@ -12,7 +12,9 @@
       "Bash(sed:*)",
       "Bash(for:*)",
       "Bash(do sed -i 's/import magia\\.box\\.example\\.hardCoreTest20250608\\.HardCoreTest20250608;/import magia.box.example.hardCoreTest20250608.core.ItemRegistryAccessor;/g' \"$file\")",
-      "Bash(done)"
+      "Bash(done)",
+      "Bash(grep:*)",
+      "Bash(ls:*)"
     ],
     "deny": []
   }

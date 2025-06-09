@@ -16,17 +16,19 @@ import java.util.Map;
 
 public class TemporaryGlassPlatformEffect extends LuckyEffectBase {
 
-    /** 足場の持続時間（秒） */
-    private static final int PLATFORM_DURATION_SECONDS = 8;
+    /** 効果持続時間（8秒間） */
+    private static final int EFFECT_DURATION_SECONDS = 8;
     
-    /** 消える前の警告時間（秒） */
-    private static final int WARNING_TIME_SECONDS = 2;
+    /** ガラス生成間隔（ティック） */
+    private static final int GENERATION_INTERVAL_TICKS = 10; // 0.5秒間隔
     
-    /** 足場の範囲（3x3） */
-    private static final int PLATFORM_RANGE = 1; // 中心から1ブロック = 3x3
+    /** プラットフォームの高度 */
+    private static final int PLATFORM_HEIGHT = 20;
     
-    /** アクティブな足場を管理するマップ */
-    private static final Map<Location, Material> activePlatforms = new HashMap<>();
+    /** プラットフォームの半径 */
+    private static final int PLATFORM_RADIUS = 5;
+    
+    private final java.util.Random random = new java.util.Random();
 
     public TemporaryGlassPlatformEffect(JavaPlugin plugin) {
         super(plugin, "一時ガラス足場", EffectRarity.EPIC);
@@ -34,138 +36,114 @@ public class TemporaryGlassPlatformEffect extends LuckyEffectBase {
 
     @Override
     public String apply(Player player) {
-        Location playerLoc = player.getLocation();
-        Location platformCenter = playerLoc.clone().subtract(0, 1, 0); // プレイヤーの足元
-        List<Location> platformBlocks = new ArrayList<>();
+        Location center = player.getLocation().clone(); // プレイヤーの足元を中心に
+        List<Block> allGlassBlocks = new ArrayList<>();
         
-        // 3x3の範囲でガラスブロックを配置
-        int blocksPlaced = 0;
-        for (int x = -PLATFORM_RANGE; x <= PLATFORM_RANGE; x++) {
-            for (int z = -PLATFORM_RANGE; z <= PLATFORM_RANGE; z++) {
-                Location blockLoc = platformCenter.clone().add(x, 0, z);
-                Block block = blockLoc.getBlock();
-                
-                // 空気ブロックのみを置換
-                if (block.getType() == Material.AIR) {
-                    // 元のブロック情報を保存
-                    activePlatforms.put(blockLoc.clone(), Material.AIR);
-                    
-                    // ガラスブロックを配置
-                    block.setType(Material.GLASS);
-                    platformBlocks.add(blockLoc.clone());
-                    blocksPlaced++;
-                    
-                    // 配置エフェクト
-                    blockLoc.getWorld().spawnParticle(
-                        Particle.CLOUD,
-                        blockLoc.clone().add(0.5, 1, 0.5),
-                        5, 0.2, 0.2, 0.2, 0.1
-                    );
-                }
-            }
-        }
+        // 初期通知
+        player.sendMessage(ChatColor.AQUA + "🔮 一時ガラス足場が断続的に生成されます！" + EFFECT_DURATION_SECONDS + "秒間持続。");
+        player.playSound(center, Sound.BLOCK_ENCHANTMENT_TABLE_USE, 1.0f, 1.2f);
         
-        if (blocksPlaced == 0) {
-            player.sendMessage(ChatColor.YELLOW + "足場を配置する空間がありませんでした。");
-            return getDescription() + " (失敗)";
-        }
-        
-        // プレイヤーへの通知とエフェクト
-        player.sendMessage(ChatColor.AQUA + "✨ 一時的なガラス足場が生成されました！");
-        player.sendMessage(ChatColor.GRAY + "(" + PLATFORM_DURATION_SECONDS + "秒後に自動的に消失します)");
-        
-        // 生成エフェクト
-        player.playSound(player.getLocation(), Sound.BLOCK_GLASS_PLACE, 
-                EffectConstants.STANDARD_VOLUME, 1.2f);
-        
-        player.getWorld().spawnParticle(
+        // 初期エフェクト
+        center.getWorld().spawnParticle(
             Particle.ENCHANT,
-            platformCenter.clone().add(0, 1, 0),
-            30, 1.5, 0.5, 1.5, 0.2
+            center,
+            30, PLATFORM_RADIUS, 2, PLATFORM_RADIUS, 0.1
         );
         
-        // 警告タスクをスケジュール（消える2秒前）
+        // 断続的生成タスク
         new BukkitRunnable() {
-            @Override
-            public void run() {
-                scheduleWarningEffects(player, platformBlocks);
-            }
-        }.runTaskLater(plugin, (PLATFORM_DURATION_SECONDS - WARNING_TIME_SECONDS) * 20L);
-        
-        // 削除タスクをスケジュール
-        new BukkitRunnable() {
-            @Override
-            public void run() {
-                removePlatform(player, platformBlocks);
-            }
-        }.runTaskLater(plugin, PLATFORM_DURATION_SECONDS * 20L);
-        
-        return getDescription() + " (" + blocksPlaced + "ブロック)";
-    }
-    
-    /**
-     * 消失前の警告エフェクトをスケジュール
-     * @param player プレイヤー
-     * @param platformBlocks 足場ブロックのリスト
-     */
-    private void scheduleWarningEffects(Player player, List<Location> platformBlocks) {
-        // 警告音
-        player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 
-                EffectConstants.STANDARD_VOLUME, 0.5f);
-        
-        // 警告メッセージ
-        player.sendMessage(ChatColor.RED + "⚠ ガラス足場が間もなく消失します！");
-        
-        // 警告パーティクルを点滅させる
-        new BukkitRunnable() {
-            int ticks = 0;
-            final int maxTicks = WARNING_TIME_SECONDS * 20; // 2秒間
+            int ticksElapsed = 0;
+            final int maxTicks = EFFECT_DURATION_SECONDS * 20;
             
             @Override
             public void run() {
-                if (ticks >= maxTicks) {
+                // 時間切れの場合は終了
+                if (ticksElapsed >= maxTicks) {
+                    finishGlassPlatform(player, allGlassBlocks);
                     cancel();
                     return;
                 }
                 
-                // 0.5秒ごとに点滅
-                if (ticks % 10 == 0) {
-                    for (Location loc : platformBlocks) {
-                        if (loc.getBlock().getType() == Material.GLASS) {
-                            loc.getWorld().spawnParticle(
-                                Particle.DUST,
-                                loc.clone().add(0.5, 1, 0.5),
-                                8, 0.3, 0.3, 0.3, 0,
-                                new Particle.DustOptions(Color.RED, 1.0f)
-                            );
-                        }
-                    }
+                // 生成間隔ごとに実行
+                if (ticksElapsed % GENERATION_INTERVAL_TICKS == 0) {
+                    generateGlassBlocks(center, allGlassBlocks);
                 }
                 
-                ticks++;
+                // 継続的なエフェクト（1秒ごと）
+                if (ticksElapsed % 20 == 0) {
+                    center.getWorld().spawnParticle(
+                        Particle.FIREWORK,
+                        center.clone().add(
+                            (random.nextDouble() - 0.5) * PLATFORM_RADIUS * 2,
+                            random.nextDouble() * 3,
+                            (random.nextDouble() - 0.5) * PLATFORM_RADIUS * 2
+                        ),
+                        5, 0.5, 0.5, 0.5, 0.1
+                    );
+                    
+                    // 生成音
+                    player.playSound(center, Sound.BLOCK_GLASS_PLACE, 0.3f, 1.0f + random.nextFloat() * 0.4f);
+                }
+                
+                ticksElapsed++;
             }
         }.runTaskTimer(plugin, 0L, 1L);
+        
+        return getDescription() + " (" + EFFECT_DURATION_SECONDS + "秒間)";
     }
     
     /**
-     * 足場を削除
-     * @param player プレイヤー
-     * @param platformBlocks 足場ブロックのリスト
+     * ガラスブロックを生成する
+     * @param center 中心位置
+     * @param allGlassBlocks 全てのガラスブロックのリスト
      */
-    private void removePlatform(Player player, List<Location> platformBlocks) {
+    private void generateGlassBlocks(Location center, List<Block> allGlassBlocks) {
+        // ランダムに3-7個のガラスブロックを生成
+        int blocksToGenerate = 3 + random.nextInt(5); // 3-7個
+        
+        for (int i = 0; i < blocksToGenerate; i++) {
+            // プレイヤーの足元周辺の範囲でランダムな位置を選択
+            int offsetX = random.nextInt(PLATFORM_RADIUS * 2 + 1) - PLATFORM_RADIUS;
+            int offsetZ = random.nextInt(PLATFORM_RADIUS * 2 + 1) - PLATFORM_RADIUS;
+            int offsetY = random.nextInt(3) - 2; // -2, -1, 0の範囲（足元より下）
+            
+            Location glassLoc = center.clone().add(offsetX, offsetY, offsetZ);
+            Block glassBlock = glassLoc.getBlock();
+            
+            // 空気ブロックの場合のみガラスを設置
+            if (glassBlock.getType() == Material.AIR) {
+                glassBlock.setType(Material.GLASS);
+                allGlassBlocks.add(glassBlock);
+                
+                // 生成エフェクト
+                glassBlock.getLocation().getWorld().spawnParticle(
+                    Particle.BLOCK,
+                    glassBlock.getLocation().add(0.5, 0.5, 0.5),
+                    8, 0.3, 0.3, 0.3, 0.1,
+                    Material.GLASS.createBlockData()
+                );
+            }
+        }
+    }
+    
+    /**
+     * ガラス足場を終了する
+     * @param player プレイヤー
+     * @param allGlassBlocks 全てのガラスブロックのリスト
+     */
+    private void finishGlassPlatform(Player player, List<Block> allGlassBlocks) {
         int blocksRemoved = 0;
         
-        for (Location loc : platformBlocks) {
-            if (loc.getBlock().getType() == Material.GLASS && activePlatforms.containsKey(loc)) {
-                // 元のブロックタイプに戻す
-                Material originalType = activePlatforms.remove(loc);
-                loc.getBlock().setType(originalType);
+        // 全てのガラスブロックを削除
+        for (Block block : allGlassBlocks) {
+            if (block.getType() == Material.GLASS) {
+                block.setType(Material.AIR);
                 blocksRemoved++;
                 
                 // 消失エフェクト
-                loc.getWorld().spawnParticle(
+                block.getLocation().getWorld().spawnParticle(
                     Particle.BLOCK,
-                    loc.clone().add(0.5, 0.5, 0.5),
+                    block.getLocation().add(0.5, 0.5, 0.5),
                     10, 0.3, 0.3, 0.3, 0.1,
                     Material.GLASS.createBlockData()
                 );
@@ -177,15 +155,17 @@ public class TemporaryGlassPlatformEffect extends LuckyEffectBase {
             player.playSound(player.getLocation(), Sound.BLOCK_GLASS_BREAK, 
                     EffectConstants.STANDARD_VOLUME, 0.8f);
             
-            player.sendMessage(ChatColor.GRAY + "ガラス足場が消失しました。");
+            player.sendMessage(ChatColor.GRAY + "⭐ ガラス足場が時間経過により消失しました。");
             
             // 最終エフェクト
-            Location centerLoc = platformBlocks.get(platformBlocks.size() / 2);
-            centerLoc.getWorld().spawnParticle(
-                Particle.POOF,
-                centerLoc.clone().add(0, 1, 0),
-                15, 1, 0.5, 1, 0.1
-            );
+            if (!allGlassBlocks.isEmpty()) {
+                Block centerBlock = allGlassBlocks.get(allGlassBlocks.size() / 2);
+                centerBlock.getLocation().getWorld().spawnParticle(
+                    Particle.POOF,
+                    centerBlock.getLocation().add(0, 1, 0),
+                    15, 1, 0.5, 1, 0.1
+                );
+            }
         }
     }
 }

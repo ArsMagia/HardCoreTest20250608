@@ -31,12 +31,13 @@ public class ItemScatterEffect extends UnluckyEffectBase {
             if (item != null && item.getType() != Material.AIR) {
                 if (random.nextInt(3) == 0) {
                     Location dropLoc = player.getLocation().add(
-                        random.nextDouble() * 10 - 5,
-                        random.nextDouble() * 3,
-                        random.nextDouble() * 10 - 5
+                        random.nextDouble() * 5 - 2.5,
+                        random.nextDouble() * 2,
+                        random.nextDouble() * 5 - 2.5
                     );
                     
-                    player.getWorld().dropItemNaturally(dropLoc, item);
+                    org.bukkit.entity.Item droppedItem = player.getWorld().dropItemNaturally(dropLoc, item);
+                    droppedItem.setGlowing(true); // グロー効果を追加
                     player.getInventory().setItem(i, null);
                     scatteredCount++;
                     

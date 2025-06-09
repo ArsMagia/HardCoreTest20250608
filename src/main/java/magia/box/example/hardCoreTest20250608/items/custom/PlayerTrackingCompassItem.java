@@ -66,18 +66,25 @@ public class PlayerTrackingCompassItem extends AbstractCustomItemV2 {
         Player player = event.getPlayer();
         ItemStack item = player.getInventory().getItemInMainHand();
 
+        // カスタムアイテムチェックを先に実行
         if (!isCustomItem(item)) {
             return;
         }
 
-        // クールダウンチェック
-        if (EffectUtils.checkCooldown(player, lastActivation.get(player.getUniqueId()), 
-                EffectConstants.ITEM_COOLDOWN_MS, ITEM_NAME)) {
+        event.setCancelled(true);
+        
+        // クールダウンチェック（複数回発動防止）
+        UUID playerId = player.getUniqueId();
+        long currentTime = System.currentTimeMillis();
+        Long lastUse = lastActivation.get(playerId);
+        
+        if (lastUse != null && (currentTime - lastUse) < EffectConstants.ITEM_COOLDOWN_MS) {
+            // クールダウン中は無言でリターン（メッセージ重複防止）
             return;
         }
-        lastActivation.put(player.getUniqueId(), System.currentTimeMillis());
-
-        event.setCancelled(true);
+        
+        // クールダウン設定（複数回発動防止のため早期設定）
+        lastActivation.put(playerId, currentTime);
 
         if (event.getAction() == Action.RIGHT_CLICK_AIR || event.getAction() == Action.RIGHT_CLICK_BLOCK) {
             // 右クリック: 対象プレイヤー変更
