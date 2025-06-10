@@ -17,41 +17,12 @@ import java.util.Random;
 // 複数のシンプルなアンラッキー効果をまとめたクラス
 public class SimpleUnluckyEffects {
     
-    // エフェクト1: 逆転操作
-    public static class ReverseControlsEffect extends UnluckyEffectBase {
-        public ReverseControlsEffect(JavaPlugin plugin) {
-            super(plugin, "逆転操作", EffectRarity.RARE);
-        }
-        
-        @Override
-        public String apply(Player player) {
-            player.addPotionEffect(new PotionEffect(PotionEffectType.NAUSEA, 300, 1));
-            player.sendMessage(ChatColor.YELLOW + "操作が逆転しました！15秒間混乱します。");
-            return getDescription();
-        }
-    }
-    
-    // エフェクト2: 偽の死
-    public static class FakeDeathEffect extends UnluckyEffectBase {
-        public FakeDeathEffect(JavaPlugin plugin) {
-            super(plugin, "偽の死", EffectRarity.LEGENDARY);
-        }
-        
-        @Override
-        public String apply(Player player) {
-            player.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 100, 1));
-            player.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 100, 255));
-            player.sendMessage(ChatColor.DARK_RED + "死んだふりをしています...5秒間動けません。");
-            return getDescription();
-        }
-    }
-    
-    // エフェクト3: ランダムテレポート
+    // エフェクト1: ランダムテレポート
     public static class RandomTeleportEffect extends UnluckyEffectBase {
         private final Random random = new Random();
         
         public RandomTeleportEffect(JavaPlugin plugin) {
-            super(plugin, "ランダムテレポート", EffectRarity.RARE);
+            super(plugin, "ランダムテレポート", EffectRarity.UNCOMMON);
         }
         
         @Override
@@ -68,7 +39,7 @@ public class SimpleUnluckyEffects {
         }
     }
     
-    // エフェクト4: アイテム重量化
+    // エフェクト2: アイテム重量化
     public static class ItemWeightEffect extends UnluckyEffectBase {
         public ItemWeightEffect(JavaPlugin plugin) {
             super(plugin, "アイテム重量化", EffectRarity.COMMON);
@@ -82,7 +53,7 @@ public class SimpleUnluckyEffects {
         }
     }
     
-    // エフェクト5: 空腹の呪い
+    // エフェクト3: 空腹の呪い
     public static class HungerCurseEffect extends UnluckyEffectBase {
         public HungerCurseEffect(JavaPlugin plugin) {
             super(plugin, "空腹の呪い", EffectRarity.COMMON);
@@ -97,47 +68,10 @@ public class SimpleUnluckyEffects {
         }
     }
     
-    // エフェクト6: 記憶喪失
-    public static class MemoryLossEffect extends UnluckyEffectBase {
-        public MemoryLossEffect(JavaPlugin plugin) {
-            super(plugin, "記憶喪失", EffectRarity.RARE);
-        }
-        
-        @Override
-        public String apply(Player player) {
-            player.sendMessage(" ");
-            player.sendMessage(" ");
-            player.sendMessage(" ");
-            player.sendMessage(" ");
-            player.sendMessage(" ");
-            player.sendMessage(" ");
-            player.sendMessage(" ");
-            player.sendMessage(" ");
-            player.sendMessage(" ");
-            player.sendMessage(" ");
-            player.sendMessage(" ");
-            player.sendMessage(" ");
-            player.sendMessage(" ");
-            player.sendMessage(" ");
-            player.sendMessage(" ");
-            player.sendMessage(" ");
-            player.sendMessage(" ");
-            player.sendMessage(" ");
-            player.sendMessage(" ");
-            player.sendMessage(" ");
-            player.sendMessage(" ");
-            player.sendMessage(" ");
-            player.sendMessage(" ");
-            player.sendMessage(" ");
-            player.sendMessage(ChatColor.DARK_PURPLE + "記憶が曖昧になりました...何をしていたか思い出せません。");
-            return getDescription();
-        }
-    }
-    
-    // エフェクト7: 炎の雨
+    // エフェクト4: 炎の雨
     public static class FireRainEffect extends UnluckyEffectBase {
         public FireRainEffect(JavaPlugin plugin) {
-            super(plugin, "炎の雨", EffectRarity.RARE);
+            super(plugin, "炎の雨", EffectRarity.UNCOMMON);
         }
         
         @Override
@@ -169,7 +103,7 @@ public class SimpleUnluckyEffects {
         }
     }
     
-    // エフェクト8: 経験値流出
+    // エフェクト5: 経験値流出
     public static class ExpLeakEffect extends UnluckyEffectBase {
         public ExpLeakEffect(JavaPlugin plugin) {
             super(plugin, "経験値流出", EffectRarity.COMMON);
@@ -184,7 +118,36 @@ public class SimpleUnluckyEffects {
         }
     }
     
-    // エフェクト9: 武器呪い
+    // エフェクト6: 逆操作効果
+    public static class ReverseControlsEffect extends UnluckyEffectBase {
+        public ReverseControlsEffect(JavaPlugin plugin) {
+            super(plugin, "逆操作効果", EffectRarity.RARE);
+        }
+        
+        @Override
+        public String apply(Player player) {
+            player.addPotionEffect(new PotionEffect(PotionEffectType.NAUSEA, 300, 1));
+            player.sendMessage(ChatColor.LIGHT_PURPLE + "操作が逆になりました...混乱します！");
+            return getDescription();
+        }
+    }
+    
+    // エフェクト7: 偽死効果
+    public static class FakeDeathEffect extends UnluckyEffectBase {
+        public FakeDeathEffect(JavaPlugin plugin) {
+            super(plugin, "偽死効果", EffectRarity.UNCOMMON);
+        }
+        
+        @Override
+        public String apply(Player player) {
+            player.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 100, 0));
+            player.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 100, 4));
+            player.sendMessage(ChatColor.BLACK + "死んだふりをしてしまいました...");
+            return getDescription();
+        }
+    }
+    
+    // エフェクト8: 武器呪い
     public static class WeaponCurseEffect extends UnluckyEffectBase {
         public WeaponCurseEffect(JavaPlugin plugin) {
             super(plugin, "武器呪い", EffectRarity.RARE);
@@ -192,18 +155,26 @@ public class SimpleUnluckyEffects {
         
         @Override
         public String apply(Player player) {
-            ItemStack mainHand = player.getInventory().getItemInMainHand();
-            if (mainHand != null && mainHand.getType() != Material.AIR) {
-                player.getInventory().setItemInMainHand(new ItemStack(Material.WOODEN_SWORD));
-                player.sendMessage(ChatColor.RED + "武器が呪われた木の剣に変化しました！");
-            } else {
-                player.sendMessage(ChatColor.YELLOW + "呪う武器がありませんでした。");
+            // 武器系アイテムを一時的に削除
+            for (int i = 0; i < 9; i++) {
+                ItemStack item = player.getInventory().getItem(i);
+                if (item != null && isWeapon(item.getType())) {
+                    player.getInventory().setItem(i, null);
+                }
             }
+            player.sendMessage(ChatColor.RED + "武器に呪いがかかり、消失しました！");
             return getDescription();
+        }
+        
+        private boolean isWeapon(Material material) {
+            return material.toString().contains("SWORD") || 
+                   material.toString().contains("AXE") ||
+                   material.toString().contains("BOW") ||
+                   material.toString().contains("TRIDENT");
         }
     }
     
-    // エフェクト10: 防具消失
+    // エフェクト9: 防具消失
     public static class ArmorVanishEffect extends UnluckyEffectBase {
         public ArmorVanishEffect(JavaPlugin plugin) {
             super(plugin, "防具消失", EffectRarity.RARE);
@@ -211,22 +182,27 @@ public class SimpleUnluckyEffects {
         
         @Override
         public String apply(Player player) {
-            boolean hasArmor = false;
-            ItemStack[] armor = player.getInventory().getArmorContents();
-            for (int i = 0; i < armor.length; i++) {
-                if (armor[i] != null && armor[i].getType() != Material.AIR) {
-                    armor[i] = null;
-                    hasArmor = true;
-                }
-            }
-            
-            if (hasArmor) {
-                player.getInventory().setArmorContents(armor);
-                player.sendMessage(ChatColor.RED + "防具が消失しました！");
-            } else {
-                player.sendMessage(ChatColor.YELLOW + "消失する防具がありませんでした。");
-            }
+            player.getInventory().setHelmet(null);
+            player.getInventory().setChestplate(null);
+            player.getInventory().setLeggings(null);
+            player.getInventory().setBoots(null);
+            player.sendMessage(ChatColor.YELLOW + "防具が消失しました！");
             return getDescription();
         }
     }
+    
+    // エフェクト10: 記憶喪失
+    public static class MemoryLossEffect extends UnluckyEffectBase {
+        public MemoryLossEffect(JavaPlugin plugin) {
+            super(plugin, "記憶喪失", EffectRarity.RARE);
+        }
+        
+        @Override
+        public String apply(Player player) {
+            player.addPotionEffect(new PotionEffect(PotionEffectType.NAUSEA, 300, 1));
+            player.sendMessage(ChatColor.DARK_PURPLE + "記憶が一部失われました...混乱しています。");
+            return getDescription();
+        }
+    }
+    
 }

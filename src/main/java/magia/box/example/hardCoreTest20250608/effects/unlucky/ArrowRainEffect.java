@@ -37,7 +37,7 @@ public class ArrowRainEffect extends UnluckyEffectBase {
     private final Random random = new Random();
 
     public ArrowRainEffect(JavaPlugin plugin) {
-        super(plugin, "矢雨", EffectRarity.COMMON);
+        super(plugin, "矢雨", EffectRarity.UNCOMMON);
     }
 
     @Override
@@ -138,31 +138,49 @@ public class ArrowRainEffect extends UnluckyEffectBase {
     }
     
     /**
-     * 矢を1本降らせる
+     * 矢を1本降らせる（完全回避システム対応）
      * @param player 対象プレイヤー
      */
     private void spawnRainArrow(Player player) {
         Location playerLoc = player.getLocation();
         
-        // プレイヤーの周囲ランダム位置を計算
-        double offsetX = (random.nextDouble() - 0.5) * RAIN_RADIUS * 2;
-        double offsetZ = (random.nextDouble() - 0.5) * RAIN_RADIUS * 2;
+        // 完全回避条件チェック
+        if (isPlayerFullyProtected(playerLoc)) {
+            // 完全回避時は矢を降らせない
+            return;
+        }
+        
+        // 部分回避条件チェック
+        boolean partiallyProtected = isPlayerPartiallyProtected(playerLoc);
+        if (partiallyProtected && random.nextInt(100) < 50) {
+            // 50%の確率で回避
+            return;
+        }
+        
+        // プレイヤーの周囲ランダム位置を計算（追跡型）
+        double offsetX, offsetZ;
+        if (random.nextInt(100) < 70) {
+            // 70%の確率でプレイヤー周辺を狙う（追跡要素）
+            offsetX = (random.nextDouble() - 0.5) * 6; // 狭い範囲
+            offsetZ = (random.nextDouble() - 0.5) * 6;
+        } else {
+            // 30%の確率で完全ランダム
+            offsetX = (random.nextDouble() - 0.5) * RAIN_RADIUS * 2;
+            offsetZ = (random.nextDouble() - 0.5) * RAIN_RADIUS * 2;
+        }
         
         // 上空からの降下位置を設定
         Location spawnLoc = playerLoc.clone().add(offsetX, SKY_HEIGHT, offsetZ);
         
-        // 着地予定位置を計算
-        Location targetLoc = spawnLoc.clone().subtract(0, SKY_HEIGHT, 0);
-        
         // 矢を生成
         Arrow arrow = spawnLoc.getWorld().spawnArrow(spawnLoc, new Vector(0, -1, 0), 0.8f, 2.0f);
         
-        // 矢の設定
+        // 矢の設定（安全な値に調整）
         arrow.setShooter(null); // シューターなしで自然災害として扱う
         arrow.setCritical(false);
         arrow.setKnockbackStrength(1); // 軽いノックバック
         arrow.setPierceLevel(0);
-        arrow.setDamage(2.0); // 1ハートのダメージ
+        arrow.setDamage(1.5); // 0.75ハートのダメージ（低体力時の即死防止）
         
         // 矢に重力を適用して自然な落下にする
         arrow.setGravity(true);
@@ -192,6 +210,72 @@ public class ArrowRainEffect extends UnluckyEffectBase {
                 checks++;
             }
         }.runTaskTimer(plugin, 20L, 10L); // 1秒後から10ティックごとにチェック
+    }
+    
+    /**
+     * プレイヤーが完全に保護されているかチェック
+     * @param location プレイヤーの位置
+     * @return 完全保護されている場合true
+     */
+    private boolean isPlayerFullyProtected(Location location) {
+        // 1. 屋根下判定
+        if (location.clone().add(0, 1, 0).getBlock().getType().isSolid()) {
+            return true;
+        }
+        
+        // 2. 水中判定
+        if (location.getBlock().getType() == Material.WATER) {
+            return true;
+        }
+        
+        // 3. 建物内判定（4方向+上下チェック）
+        boolean enclosed = true;
+        for (int x = -1; x <= 1; x++) {
+            for (int z = -1; z <= 1; z++) {
+                if (x == 0 && z == 0) continue;
+                if (!location.clone().add(x, 0, z).getBlock().getType().isSolid()) {
+                    enclosed = false;
+                    break;
+                }
+            }
+        }
+        if (enclosed) return true;
+        
+        // 4. 地下構造判定（Y座標 + 周囲ブロック密度）
+        if (location.getY() < 50) {
+            int solidBlocks = 0;
+            for (int y = 1; y <= 3; y++) {
+                if (location.clone().add(0, y, 0).getBlock().getType().isSolid()) {
+                    solidBlocks++;
+                }
+            }
+            if (solidBlocks >= 2) return true; // 頭上に固体ブロックが2つ以上
+        }
+        
+        return false;
+    }
+    
+    /**
+     * プレイヤーが部分的に保護されているかチェック
+     * @param location プレイヤーの位置
+     * @return 部分保護されている場合true
+     */
+    private boolean isPlayerPartiallyProtected(Location location) {
+        Material headBlock = location.clone().add(0, 1, 0).getBlock().getType();
+        
+        // 1. 木の下（葉ブロック）
+        if (headBlock.name().contains("LEAVES")) {
+            return true;
+        }
+        
+        // 2. 半ブロック下（階段・スラブ等）
+        if (headBlock.name().contains("STAIRS") || 
+            headBlock.name().contains("SLAB") ||
+            headBlock.name().contains("TRAPDOOR")) {
+            return true;
+        }
+        
+        return false;
     }
     
     /**

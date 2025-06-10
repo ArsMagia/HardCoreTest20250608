@@ -15,7 +15,7 @@ public class ShameMarkEffect extends UnluckyEffectBase {
     private final Random random = new Random();
 
     public ShameMarkEffect(JavaPlugin plugin) {
-        super(plugin, "恥辱の刻印", EffectRarity.RARE);
+        super(plugin, "恥辱の刻印", EffectRarity.COMMON);
     }
 
     @Override

@@ -21,7 +21,7 @@ public class MobSpeedBoostEffect extends UnluckyEffectBase {
     private static final Map<UUID, Double> originalSpeeds = new HashMap<>();
 
     public MobSpeedBoostEffect(JavaPlugin plugin) {
-        super(plugin, "モブ加速", EffectRarity.COMMON);
+        super(plugin, "モブ加速", EffectRarity.UNCOMMON);
     }
 
     @Override

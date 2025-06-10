@@ -15,7 +15,8 @@
       "Bash(done)",
       "Bash(grep:*)",
       "Bash(ls:*)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Bash(javac:*)"
     ],
     "deny": []
   }

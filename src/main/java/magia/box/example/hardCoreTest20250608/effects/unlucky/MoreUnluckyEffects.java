@@ -17,24 +17,25 @@ import java.util.Random;
 // 追加のアンラッキー効果
 public class MoreUnluckyEffects {
     
-    // エフェクト11: 溺れる感覚
+    // エフェクト10: 溺水感覚
     public static class DrowningFeelingEffect extends UnluckyEffectBase {
         public DrowningFeelingEffect(JavaPlugin plugin) {
-            super(plugin, "溺れる感覚", EffectRarity.COMMON);
+            super(plugin, "溺水感覚", EffectRarity.RARE);
         }
         
         @Override
         public String apply(Player player) {
             player.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 300, 1));
-            player.sendMessage(ChatColor.BLUE + "溺れているような感覚に襲われます...息苦しい!");
+            player.addPotionEffect(new PotionEffect(PotionEffectType.MINING_FATIGUE, 300, 1));
+            player.sendMessage(ChatColor.BLUE + "溺れているような感覚に襲われました...");
             return getDescription();
         }
     }
     
-    // エフェクト12: 暗闇恐怖症
+    // エフェクト12: 電撃ショック
     public static class DarkphobiaEffect extends UnluckyEffectBase {
         public DarkphobiaEffect(JavaPlugin plugin) {
-            super(plugin, "暗闇恐怖症", EffectRarity.RARE);
+            super(plugin, "暗闇恐怖症", EffectRarity.UNCOMMON);
         }
         
         @Override
@@ -46,7 +47,7 @@ public class MoreUnluckyEffects {
         }
     }
     
-    // エフェクト13: 手の震え
+    // エフェクト11: 手の震え
     public static class HandTremorEffect extends UnluckyEffectBase {
         public HandTremorEffect(JavaPlugin plugin) {
             super(plugin, "手の震え", EffectRarity.COMMON);

@@ -46,6 +46,23 @@ public class EffectRegistry {
     public int getUnluckyEffectCount() {
         return unluckySelector.size();
     }
+    
+    // 新しいメソッド追加
+    public int getLuckyEffectsCount() {
+        return luckySelector.size();
+    }
+    
+    public int getUnluckyEffectsCount() {
+        return unluckySelector.size();
+    }
+    
+    public int getTotalEffectsCount() {
+        return allEffects.size();
+    }
+    
+    public Map<String, LuckyEffect> getAllEffects() {
+        return new HashMap<>(allEffects);
+    }
 
     public List<LuckyEffect> getAllLuckyEffects() {
         List<LuckyEffect> luckyEffects = new ArrayList<>();

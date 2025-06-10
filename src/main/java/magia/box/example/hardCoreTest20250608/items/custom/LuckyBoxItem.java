@@ -148,22 +148,16 @@ public class LuckyBoxItem extends AbstractCustomItemV2 {
         effectRegistry.registerEffect("bomb_throw", new BombThrowEffect(plugin));
         
         // 基本アンラッキー効果
-        effectRegistry.registerEffect("slowness", new SlownessUnluckyEffect(plugin));
         effectRegistry.registerEffect("gravity_flip", new GravityFlipEffect(plugin));
         effectRegistry.registerEffect("cursed_sounds", new CursedSoundsEffect(plugin));
         effectRegistry.registerEffect("arrow_rain", new ArrowRainEffect(plugin));
         
         // 追加アンラッキー効果 (SimpleUnluckyEffects)
-        effectRegistry.registerEffect("upside_down_vision", new UpsideDownVisionEffect(plugin));
         effectRegistry.registerEffect("ground_liquefaction", new GroundLiquefactionEffect(plugin));
         effectRegistry.registerEffect("giant_curse", new GiantCurseEffect(plugin));
         effectRegistry.registerEffect("food_decay", new FoodDecayEffect(plugin));
         effectRegistry.registerEffect("tool_breakage", new ToolBreakageEffect(plugin));
-        effectRegistry.registerEffect("weight_curse", new WeightCurseEffect(plugin));
         effectRegistry.registerEffect("color_blindness", new ColorBlindnessEffect(plugin));
-        effectRegistry.registerEffect("compass_confusion", new CompassConfusionEffect(plugin));
-        effectRegistry.registerEffect("hallucination_sounds", new HallucinationSoundsEffect(plugin));
-        effectRegistry.registerEffect("fake_info", new FakeInfoEffect(plugin));
         effectRegistry.registerEffect("shame_mark", new ShameMarkEffect(plugin));
         effectRegistry.registerEffect("curse_infection", new CurseInfectionEffect(plugin));
         effectRegistry.registerEffect("time_acceleration", new TimeAccelerationEffect(plugin));

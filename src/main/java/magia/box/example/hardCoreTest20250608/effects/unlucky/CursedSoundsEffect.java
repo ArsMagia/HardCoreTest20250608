@@ -15,7 +15,7 @@ public class CursedSoundsEffect extends UnluckyEffectBase {
     private final Random random = new Random();
 
     public CursedSoundsEffect(JavaPlugin plugin) {
-        super(plugin, "呪われた音響", EffectRarity.LEGENDARY);
+        super(plugin, "呪われた音響", EffectRarity.RARE);
     }
 
     @Override
