@@ -17,14 +17,14 @@ import org.bukkit.util.Vector;
 public class GravityWellEffect extends LuckyEffectBase {
 
     public GravityWellEffect(JavaPlugin plugin) {
-        super(plugin, "重力井戸", EffectRarity.RARE);
+        super(plugin, "重力操作", EffectRarity.RARE);
     }
 
     @Override
     public String apply(Player player) {
         Location center = player.getLocation();
         
-        player.sendMessage(ChatColor.DARK_PURPLE + "重力井戸が発生！周囲のアイテムと経験値を引き寄せます。");
+        player.sendMessage(ChatColor.DARK_PURPLE + "重力操作が発動！広範囲のアイテムと経験値を引き寄せます。");
         player.playSound(center, Sound.BLOCK_BEACON_ACTIVATE, 1.0f, 0.5f);
         
         new BukkitRunnable() {
@@ -33,14 +33,14 @@ public class GravityWellEffect extends LuckyEffectBase {
             @Override
             public void run() {
                 if (duration >= 200 || !player.isOnline()) {
-                    player.sendMessage(ChatColor.GRAY + "重力井戸が消失しました。");
+                    player.sendMessage(ChatColor.GRAY + "重力操作が終了しました。");
                     this.cancel();
                     return;
                 }
                 
                 Location playerLoc = player.getLocation();
                 
-                for (Entity entity : playerLoc.getWorld().getNearbyEntities(playerLoc, 15, 15, 15)) {
+                for (Entity entity : playerLoc.getWorld().getNearbyEntities(playerLoc, 75, 75, 75)) {
                     if (entity instanceof Item || entity instanceof ExperienceOrb) {
                         Vector direction = playerLoc.toVector().subtract(entity.getLocation().toVector());
                         double distance = direction.length();

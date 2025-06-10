@@ -14,7 +14,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 public class LuckyBoxDistributionEffect extends LuckyEffectBase {
 
     public LuckyBoxDistributionEffect(JavaPlugin plugin) {
-        super(plugin, "ラッキーボックス大配布", EffectRarity.LEGENDARY);
+        super(plugin, "ラッキーボックス大配布", EffectRarity.EPIC);
     }
 
     @Override

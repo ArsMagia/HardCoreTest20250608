@@ -12,7 +12,7 @@ import org.bukkit.potion.PotionEffectType;
 public class InstantMiningEffect extends LuckyEffectBase {
 
     public InstantMiningEffect(JavaPlugin plugin) {
-        super(plugin, "時間停止採掘", EffectRarity.RARE);
+        super(plugin, "時間停止採掘", EffectRarity.UNCOMMON);
     }
 
     @Override

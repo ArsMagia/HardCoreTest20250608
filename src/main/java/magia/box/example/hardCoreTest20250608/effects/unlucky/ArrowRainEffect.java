@@ -106,10 +106,10 @@ public class ArrowRainEffect extends UnluckyEffectBase {
                     return;
                 }
                 
-                // 矢の降下間隔ごとに実行
+                // 矢の降下間隔ごとに実行（パフォーマンス最適化）
                 if (ticksElapsed % ARROW_INTERVAL_TICKS == 0) {
-                    // 複数の矢を同時に降らせる
-                    int arrowCount = 3 + random.nextInt(3); // 3-5本の矢
+                    // 矢の数を制限（2-3本に削減）
+                    int arrowCount = 2 + random.nextInt(2); // 2-3本の矢
                     for (int i = 0; i < arrowCount; i++) {
                         spawnRainArrow(player);
                     }
@@ -167,23 +167,31 @@ public class ArrowRainEffect extends UnluckyEffectBase {
         // 矢に重力を適用して自然な落下にする
         arrow.setGravity(true);
         
-        // 着地エフェクト用のタスク（矢が着地するまでの時間を予測）
+        // 着地エフェクト用のタスク（パフォーマンス最適化）
         new BukkitRunnable() {
+            int checks = 0;
+            final int maxChecks = 10; // 最大チェック回数制限
+            
             @Override
             public void run() {
-                if (arrow.isDead() || arrow.isOnGround()) {
-                    // 着地エフェクト
-                    Location arrowLoc = arrow.getLocation();
-                    arrowLoc.getWorld().spawnParticle(
-                        Particle.BLOCK,
-                        arrowLoc,
-                        5, 0.3, 0.1, 0.3, 0.1,
-                        Material.DIRT.createBlockData()
-                    );
+                if (arrow.isDead() || arrow.isOnGround() || checks >= maxChecks) {
+                    // 着地エフェクト（確率的に表示）
+                    if (arrow.isDead() || arrow.isOnGround()) {
+                        if (random.nextInt(100) < 30) { // 30%の確率で着地エフェクト
+                            Location arrowLoc = arrow.getLocation();
+                            arrowLoc.getWorld().spawnParticle(
+                                Particle.BLOCK,
+                                arrowLoc,
+                                3, 0.2, 0.1, 0.2, 0.05,
+                                Material.DIRT.createBlockData()
+                            );
+                        }
+                    }
                     cancel();
                 }
+                checks++;
             }
-        }.runTaskTimer(plugin, 20L, 5L); // 1秒後から5ティックごとにチェック
+        }.runTaskTimer(plugin, 20L, 10L); // 1秒後から10ティックごとにチェック
     }
     
     /**

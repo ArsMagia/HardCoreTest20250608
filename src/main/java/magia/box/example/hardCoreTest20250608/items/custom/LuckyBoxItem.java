@@ -4,6 +4,7 @@ import magia.box.example.hardCoreTest20250608.items.core.AbstractCustomItemV2;
 import magia.box.example.hardCoreTest20250608.items.core.ItemRarity;
 import magia.box.example.hardCoreTest20250608.effects.*;
 import magia.box.example.hardCoreTest20250608.effects.lucky.*;
+import magia.box.example.hardCoreTest20250608.effects.FutureGuaranteeManager;
 import magia.box.example.hardCoreTest20250608.effects.unlucky.*;
 import static magia.box.example.hardCoreTest20250608.effects.unlucky.SimpleUnluckyEffects.*;
 import static magia.box.example.hardCoreTest20250608.effects.unlucky.MoreUnluckyEffects.*;
@@ -41,28 +42,29 @@ public class LuckyBoxItem extends AbstractCustomItemV2 {
                 .addHint("運が良ければ特別な効果が..."));
         
         this.effectRegistry = new EffectRegistry(plugin);
+        // FutureGuaranteeManagerを初期化
+        FutureGuaranteeManager.initialize(plugin);
         initializeEffects();
     }
 
     public LuckyBoxItem(JavaPlugin plugin, ItemBuilder builder) {
         super(plugin, builder);
         this.effectRegistry = new EffectRegistry(plugin);
+        // FutureGuaranteeManagerを初期化
+        FutureGuaranteeManager.initialize(plugin);
         initializeEffects();
     }
 
     private void initializeEffects() {
         // 時空間系ラッキー効果
-        effectRegistry.registerEffect("time_stop", new TimeStopEffect(plugin));
         effectRegistry.registerEffect("safe_teleport", new SafeTeleportEffect(plugin));
         effectRegistry.registerEffect("time_rewind", new TimeRewindEffect(plugin));
         effectRegistry.registerEffect("future_vision", new FutureVisionEffect(plugin));
         
         // 環境操作系ラッキー効果
-        effectRegistry.registerEffect("golden_path", new GoldenPathEffect(plugin));
         effectRegistry.registerEffect("cloud_bridge", new CloudBridgeEffect(plugin));
         effectRegistry.registerEffect("gravity_well", new GravityWellEffect(plugin));
         effectRegistry.registerEffect("plant_growth_wave", new PlantGrowthWaveEffect(plugin));
-        effectRegistry.registerEffect("temporary_glass_platform", new TemporaryGlassPlatformEffect(plugin));
         
         // 変身・能力系ラッキー効果
         effectRegistry.registerEffect("invisibility_master", new InvisibilityMasterEffect(plugin));
@@ -95,7 +97,6 @@ public class LuckyBoxItem extends AbstractCustomItemV2 {
         effectRegistry.registerEffect("random_potion_lucky", new RandomPotionLuckyEffect(plugin));
         effectRegistry.registerEffect("random_buff_potion", new RandomBuffPotionEffect(plugin));
         effectRegistry.registerEffect("multi_buff_combination", new MultiBuffCombinationEffect(plugin));
-        effectRegistry.registerEffect("permanent_luck", new PermanentLuckEffect(plugin));
         effectRegistry.registerEffect("debuff_cleanse", new DebuffCleanseEffect(plugin));
         
         // 体力増減系ラッキー効果
@@ -112,6 +113,13 @@ public class LuckyBoxItem extends AbstractCustomItemV2 {
         effectRegistry.registerEffect("speed", new SpeedLuckyEffect(plugin));
         effectRegistry.registerEffect("temporary_flight", new TemporaryFlightEffect(plugin));
         effectRegistry.registerEffect("dimension_pocket", new DimensionPocketEffect(plugin));
+        
+        // 新しいLEGENDARY効果
+        effectRegistry.registerEffect("stable_future", new StableFutureEffect(plugin));
+        effectRegistry.registerEffect("rush_addiction", new RushAddictionEffect(plugin));
+        effectRegistry.registerEffect("time_leap", new TimeLeapEffect(plugin));
+        effectRegistry.registerEffect("adrenaline_rush", new AdrenalineRushEffect(plugin));
+        effectRegistry.registerEffect("future_selection", new FutureSelectionEffect(plugin));
         
         // 時空間系アンラッキー効果
         effectRegistry.registerEffect("spacetime_distortion", new SpaceTimeDistortionEffect(plugin));
@@ -162,6 +170,13 @@ public class LuckyBoxItem extends AbstractCustomItemV2 {
         effectRegistry.registerEffect("dimension_rift", new DimensionRiftEffect(plugin));
         effectRegistry.registerEffect("falling_blocks", new FallingBlocksEffect(plugin));
         effectRegistry.registerEffect("weather_storm", new WeatherStormEffect(plugin));
+        
+        // 新しいunlucky効果
+        effectRegistry.registerEffect("curse_proxy", new CurseProxyEffect(plugin));
+        effectRegistry.registerEffect("annoying_youtuber", new AnnoyingYoutuberEffect(plugin));
+        effectRegistry.registerEffect("worst_building", new WorstBuildingEffect(plugin));
+        effectRegistry.registerEffect("item_transfer", new ItemTransferEffect(plugin));
+        effectRegistry.registerEffect("follow_me", new FollowMeEffect(plugin));
         
         // SimpleUnluckyEffects のネストクラス
         effectRegistry.registerEffect("reverse_controls", new ReverseControlsEffect(plugin));
@@ -219,6 +234,7 @@ public class LuckyBoxItem extends AbstractCustomItemV2 {
         effectRegistry.registerEffect("light_levitation", createLevitationVariant(plugin));
         effectRegistry.registerEffect("misfortune", createUnluckVariant(plugin));
         effectRegistry.registerEffect("darkness_veil", createDarknessVariant(plugin));
+        
     }
     
     public EffectRegistry getEffectRegistry() {
@@ -270,15 +286,53 @@ public class LuckyBoxItem extends AbstractCustomItemV2 {
             player.getInventory().setItemInMainHand(null);
         }
 
-        // ラッキー/アンラッキー判定
-        boolean isLucky = determineIsLucky();
-
         player.sendMessage(USE_MESSAGE);
+
+        // 将来保証システムを最優先でチェック
+        FutureGuaranteeManager manager = FutureGuaranteeManager.getInstance();
+        if (manager == null) {
+            // マネージャーが初期化されていない場合は再初期化
+            FutureGuaranteeManager.initialize(plugin);
+            manager = FutureGuaranteeManager.getInstance();
+        }
+        
+        if (manager != null && manager.hasGuarantee(player)) {
+            handleGuaranteedEffect(player, manager);
+            return;
+        }
+
+        // 通常のラッキー/アンラッキー判定
+        boolean isLucky = determineIsLucky();
 
         if (isLucky) {
             handleLuckyEffect(player);
         } else {
             handleUnluckyEffect(player);
+        }
+    }
+
+    private void handleGuaranteedEffect(Player player, FutureGuaranteeManager manager) {
+        FutureGuaranteeManager.GuaranteeType guaranteeType = manager.getGuaranteeType(player);
+        manager.consumeGuarantee(player);
+        
+        player.sendMessage(ChatColor.GOLD + "✨ 将来保証が発動！ " + LUCKY_MESSAGE);
+        
+        // 保証された効果を実行
+        LuckyEffect guaranteedEffect = getGuaranteedEffect(guaranteeType);
+        if (guaranteedEffect != null) {
+            player.playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1.0f, 1.0f);
+            player.getWorld().spawnParticle(
+                    Particle.TOTEM_OF_UNDYING,
+                    player.getLocation().add(0, 1, 0),
+                    30, 1, 1, 1, 0.1
+            );
+            
+            String effectDescription = guaranteedEffect.apply(player);
+            EffectUtils.broadcastEffectMessage(player, effectDescription, guaranteedEffect.getRarity(), true);
+        } else {
+            // フォールバック：保証された効果が見つからない場合は通常のラッキー効果
+            player.sendMessage(ChatColor.YELLOW + "⚠ 保証された効果が見つかりません。通常のラッキー効果を実行します。");
+            handleLuckyEffect(player);
         }
     }
 
@@ -296,6 +350,24 @@ public class LuckyBoxItem extends AbstractCustomItemV2 {
         if (effect != null) {
             String effectDescription = effect.apply(player);
             EffectUtils.broadcastEffectMessage(player, effectDescription, effect.getRarity(), true);
+        }
+    }
+    
+    private LuckyEffect getGuaranteedEffect(FutureGuaranteeManager.GuaranteeType guaranteeType) {
+        switch (guaranteeType) {
+            case STABLE_FUTURE:
+                // 安定した将来の場合はランダムな良い効果（EPIC以上優先）
+                return effectRegistry.getRandomLucky();
+            case RUSH_ADDICTION:
+                return effectRegistry.getEffect("malphite_ult");
+            case TIME_LEAP:
+                return effectRegistry.getEffect("time_rewind");
+            case ADRENALINE_RUSH:
+                return effectRegistry.getEffect("multi_buff_combination");
+            case FUTURE_VISION:
+                return effectRegistry.getEffect("future_vision");
+            default:
+                return effectRegistry.getRandomLucky();
         }
     }
 

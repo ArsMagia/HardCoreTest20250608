@@ -31,19 +31,25 @@ public class FallingBlocksEffect extends UnluckyEffectBase {
         
         new BukkitRunnable() {
             int counter = 0;
+            int totalBlocksSpawned = 0;
+            final int maxBlocks = 20; // 最大ブロック数制限
             
             @Override
             public void run() {
-                if (counter >= 10 || !player.isOnline()) {
+                if (counter >= 10 || !player.isOnline() || totalBlocksSpawned >= maxBlocks) {
+                    if (player.isOnline() && totalBlocksSpawned >= maxBlocks) {
+                        player.sendMessage(ChatColor.YELLOW + "（パフォーマンス保護により制限に達しました）");
+                    }
                     this.cancel();
                     return;
                 }
                 
-                // ランダムな位置から落下ブロックを生成
-                for (int i = 0; i < 3; i++) {
-                    int x = center.getBlockX() + random.nextInt(10) - 5;
-                    int z = center.getBlockZ() + random.nextInt(10) - 5;
-                    int y = center.getBlockY() + 5 + random.nextInt(5);
+                // ランダムな位置から落下ブロックを生成（数を削減）
+                int blocksThisRound = Math.min(2, maxBlocks - totalBlocksSpawned); // 最大2個まで
+                for (int i = 0; i < blocksThisRound; i++) {
+                    int x = center.getBlockX() + random.nextInt(8) - 4; // 範囲も削減
+                    int z = center.getBlockZ() + random.nextInt(8) - 4;
+                    int y = center.getBlockY() + 5 + random.nextInt(3); // 高さも削減
                     
                     Location spawnLoc = new Location(center.getWorld(), x, y, z);
                     
@@ -52,6 +58,8 @@ public class FallingBlocksEffect extends UnluckyEffectBase {
                     
                     FallingBlock fallingBlock = center.getWorld().spawnFallingBlock(spawnLoc, material.createBlockData());
                     fallingBlock.setDropItem(false);
+                    fallingBlock.setHurtEntities(false); // エンティティダメージを無効化
+                    totalBlocksSpawned++;
                 }
                 
                 counter++;

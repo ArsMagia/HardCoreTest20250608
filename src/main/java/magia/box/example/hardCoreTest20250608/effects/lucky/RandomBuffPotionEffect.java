@@ -40,7 +40,7 @@ public class RandomBuffPotionEffect extends LuckyEffectBase {
     );
 
     public RandomBuffPotionEffect(JavaPlugin plugin) {
-        super(plugin, "ランダムバフポーション", EffectRarity.COMMON);
+        super(plugin, "ランダムバフポーション", EffectRarity.UNCOMMON);
     }
 
     @Override

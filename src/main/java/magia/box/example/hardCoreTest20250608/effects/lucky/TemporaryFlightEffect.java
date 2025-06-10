@@ -11,7 +11,7 @@ import org.bukkit.scheduler.BukkitRunnable;
 public class TemporaryFlightEffect extends LuckyEffectBase {
 
     public TemporaryFlightEffect(JavaPlugin plugin) {
-        super(plugin, "5秒間飛行能力", EffectRarity.RARE);
+        super(plugin, "5秒間飛行能力", EffectRarity.UNCOMMON);
     }
 
     @Override

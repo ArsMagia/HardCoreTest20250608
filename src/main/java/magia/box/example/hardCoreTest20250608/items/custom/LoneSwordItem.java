@@ -36,7 +36,7 @@ public class LoneSwordItem extends AbstractCustomItemV2 {
                 .rarity(ItemRarity.RARE)
                 .addLore("右クリックで体力回復")
                 .addLore("回復量: 2ハート")
-                .addHint("耐久力消費: " + DURABILITY_COST));
+                .addHint("耐久消費: 50"));
     }
 
     @EventHandler(priority = org.bukkit.event.EventPriority.NORMAL)

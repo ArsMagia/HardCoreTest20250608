@@ -72,7 +72,7 @@ public class LuckyTestGUI implements Listener {
     }
     
     private ItemStack createEffectItem(LuckyEffect effect, boolean isLucky) {
-        Material material = isLucky ? Material.EMERALD : Material.REDSTONE;
+        Material material = getRarityMaterial(effect.getRarity(), isLucky);
         ItemStack item = new ItemStack(material);
         ItemMeta meta = item.getItemMeta();
         
@@ -92,6 +92,22 @@ public class LuckyTestGUI implements Listener {
         }
         
         return item;
+    }
+    
+    private Material getRarityMaterial(magia.box.example.hardCoreTest20250608.effects.EffectRarity rarity, boolean isLucky) {
+        switch (rarity) {
+            case LEGENDARY:
+                return isLucky ? Material.NETHER_STAR : Material.WITHER_SKELETON_SKULL;
+            case EPIC:
+                return isLucky ? Material.DIAMOND : Material.OBSIDIAN;
+            case RARE:
+                return isLucky ? Material.GOLD_INGOT : Material.NETHERITE_SCRAP;
+            case UNCOMMON:
+                return isLucky ? Material.IRON_INGOT : Material.COAL;
+            case COMMON:
+            default:
+                return isLucky ? Material.EMERALD : Material.REDSTONE;
+        }
     }
     
     private void setupNavigation(Inventory gui, int currentPage, int totalPages, boolean isLucky) {

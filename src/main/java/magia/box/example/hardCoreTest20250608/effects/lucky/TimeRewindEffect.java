@@ -20,7 +20,7 @@ public class TimeRewindEffect extends LuckyEffectBase {
     private static final Map<UUID, PlayerSnapshot> snapshots = new HashMap<>();
 
     public TimeRewindEffect(JavaPlugin plugin) {
-        super(plugin, "時間巻き戻し", EffectRarity.LEGENDARY);
+        super(plugin, "時間巻き戻し", EffectRarity.EPIC);
         
         new BukkitRunnable() {
             @Override
@@ -29,7 +29,7 @@ public class TimeRewindEffect extends LuckyEffectBase {
                     snapshots.put(player.getUniqueId(), new PlayerSnapshot(player));
                 }
             }
-        }.runTaskTimer(plugin, 0L, 600L);
+        }.runTaskTimer(plugin, 0L, 140L); // 7秒間隔に変更
     }
 
     @Override
@@ -50,7 +50,7 @@ public class TimeRewindEffect extends LuckyEffectBase {
             player.setFoodLevel(snapshot.foodLevel);
             player.getInventory().setContents(snapshot.inventory.clone());
             
-            player.sendMessage(ChatColor.LIGHT_PURPLE + "30秒前の状態に戻りました！");
+            player.sendMessage(ChatColor.LIGHT_PURPLE + "7秒前の状態に戻りました！");
             player.playSound(player.getLocation(), Sound.BLOCK_BEACON_ACTIVATE, 1.0f, 0.8f);
             
             snapshot.location.getWorld().spawnParticle(

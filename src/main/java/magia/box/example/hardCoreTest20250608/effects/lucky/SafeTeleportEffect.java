@@ -17,7 +17,7 @@ public class SafeTeleportEffect extends LuckyEffectBase {
     private final Random random = new Random();
 
     public SafeTeleportEffect(JavaPlugin plugin) {
-        super(plugin, "安全地帯テレポート", EffectRarity.RARE);
+        super(plugin, "安全地帯テレポート", EffectRarity.UNCOMMON);
     }
 
     @Override

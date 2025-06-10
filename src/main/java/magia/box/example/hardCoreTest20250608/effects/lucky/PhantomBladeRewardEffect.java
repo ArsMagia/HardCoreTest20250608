@@ -13,7 +13,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 public class PhantomBladeRewardEffect extends LuckyEffectBase {
 
     public PhantomBladeRewardEffect(JavaPlugin plugin) {
-        super(plugin, "Phantom Blade", EffectRarity.LEGENDARY);
+        super(plugin, "Phantom Blade", EffectRarity.EPIC);
     }
 
     @Override

@@ -13,7 +13,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 public class GrappleRewardEffect extends LuckyEffectBase {
 
     public GrappleRewardEffect(JavaPlugin plugin) {
-        super(plugin, "グラップルアイテム", EffectRarity.RARE);
+        super(plugin, "グラップルの使い手", EffectRarity.RARE);
     }
 
     @Override
@@ -21,7 +21,7 @@ public class GrappleRewardEffect extends LuckyEffectBase {
         ItemStack grapple = ItemRegistryAccessor.getGrappleItem().createItem();
         player.getInventory().addItem(grapple);
         
-        player.sendMessage(ChatColor.AQUA + "グラップルアイテムを獲得しました！");
+        player.sendMessage(ChatColor.AQUA + "グラップルの使い手になりました！1分間、グラップル使用後8秒間は落下ダメージが半減されます。");
         player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.5f);
         
         player.getWorld().spawnParticle(

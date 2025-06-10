@@ -181,9 +181,6 @@ public class SpecialMultiToolItem extends AbstractCustomItemV2 {
             return;
         }
         
-        // デバッグログ
-        player.sendMessage(ChatColor.GRAY + "[DEBUG] クリックされたアイテム: " + clickedItem.getType());
-        
         // クリックされたアイテムに応じてGUIを開く
         Material clickedType = clickedItem.getType();
         
@@ -225,8 +222,6 @@ public class SpecialMultiToolItem extends AbstractCustomItemV2 {
      * @param player プレイヤー
      */
     private void performRandomItemGeneration(Player player) {
-        // デバッグログ
-        player.sendMessage(ChatColor.GRAY + "[DEBUG] アイテム錬成を開始します...");
         Random random = new Random();
         
         // レアリティ決定（確率：COMMON:50%, UNCOMMON:30%, RARE:15%, EPIC:4%, LEGENDARY:1%）

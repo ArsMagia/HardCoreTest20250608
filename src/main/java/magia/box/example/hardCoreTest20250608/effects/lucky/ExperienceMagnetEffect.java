@@ -16,7 +16,7 @@ import org.bukkit.util.Vector;
 public class ExperienceMagnetEffect extends LuckyEffectBase {
 
     public ExperienceMagnetEffect(JavaPlugin plugin) {
-        super(plugin, "経験値磁石", EffectRarity.RARE);
+        super(plugin, "経験値磁石", EffectRarity.UNCOMMON);
     }
 
     @Override

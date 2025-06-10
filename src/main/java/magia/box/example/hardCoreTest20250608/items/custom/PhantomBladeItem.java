@@ -38,7 +38,7 @@ public class PhantomBladeItem extends AbstractCustomItemV2 {
                 .rarity(ItemRarity.RARE)
                 .addLore("右クリックで前方ダッシュ")
                 .addLore("ダッシュ力: 強力")
-                .addHint("耐久力消費: " + DURABILITY_COST));
+                .addHint("耐久消費: 10"));
     }
 
     @EventHandler(priority = org.bukkit.event.EventPriority.NORMAL)

@@ -13,7 +13,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 public class LoneSwordRewardEffect extends LuckyEffectBase {
 
     public LoneSwordRewardEffect(JavaPlugin plugin) {
-        super(plugin, "Lone Sword", EffectRarity.LEGENDARY);
+        super(plugin, "Lone Sword", EffectRarity.EPIC);
     }
 
     @Override

@@ -29,10 +29,10 @@ public class InvisibilityMasterEffect extends LuckyEffectBase implements Listene
 
     @Override
     public String apply(Player player) {
-        player.addPotionEffect(new PotionEffect(PotionEffectType.INVISIBILITY, 300, 0, false, false));
+        player.addPotionEffect(new PotionEffect(PotionEffectType.INVISIBILITY, 60, 0, false, false));
         silentPlayers.add(player.getUniqueId());
         
-        player.sendMessage(ChatColor.GRAY + "完全な透明化が発動！15秒間、姿・音・足跡が消えます。");
+        player.sendMessage(ChatColor.GRAY + "完全な透明化が発動！3秒間、姿・音・足跡が消えます。");
         player.playSound(player.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 1.0f, 0.5f);
         
         player.getWorld().spawnParticle(
@@ -50,7 +50,7 @@ public class InvisibilityMasterEffect extends LuckyEffectBase implements Listene
                     player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f, 1.0f);
                 }
             }
-        }.runTaskLater(plugin, 300L);
+        }.runTaskLater(plugin, 60L); // 3秒に変更
         
         return getDescription();
     }

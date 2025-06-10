@@ -36,36 +36,51 @@ public class TreasureRainEffect extends LuckyEffectBase {
         
         new BukkitRunnable() {
             int counter = 0;
+            int totalItemsDropped = 0;
+            final int maxItems = 50; // アイテム数制限
             
             @Override
             public void run() {
-                if (counter >= 30 || !player.isOnline()) {
-                    player.sendMessage(ChatColor.GRAY + "宝の雨が止みました。");
+                if (counter >= 30 || !player.isOnline() || totalItemsDropped >= maxItems) {
+                    if (player.isOnline()) {
+                        player.sendMessage(ChatColor.GRAY + "宝の雨が止みました。");
+                        if (totalItemsDropped >= maxItems) {
+                            player.sendMessage(ChatColor.YELLOW + "（パフォーマンス保護により制限に達しました）");
+                        }
+                    }
                     this.cancel();
                     return;
                 }
                 
-                Location dropLoc = player.getLocation().add(
-                    random.nextInt(10) - 5,
-                    10 + random.nextInt(5),
-                    random.nextInt(10) - 5
-                );
+                // 毎回ではなく、確率的にアイテムをドロップ
+                if (random.nextInt(100) < 80) { // 80%の確率
+                    Location dropLoc = player.getLocation().add(
+                        random.nextInt(10) - 5,
+                        10 + random.nextInt(5),
+                        random.nextInt(10) - 5
+                    );
+                    
+                    Material treasure = treasures[random.nextInt(treasures.length)];
+                    int amount = treasure == Material.DIAMOND || treasure == Material.EMERALD ? 
+                        1 + random.nextInt(2) : 1 + random.nextInt(4);
+                    
+                    ItemStack item = new ItemStack(treasure, amount);
+                    player.getWorld().dropItemNaturally(dropLoc, item);
+                    totalItemsDropped++;
+                    
+                    // パーティクル削減（5分の1に）
+                    if (totalItemsDropped % 5 == 0) {
+                        dropLoc.getWorld().spawnParticle(
+                            Particle.TOTEM_OF_UNDYING,
+                            dropLoc,
+                            5, 0.5, 0.5, 0.5, 0.05
+                        );
+                    }
+                }
                 
-                Material treasure = treasures[random.nextInt(treasures.length)];
-                int amount = treasure == Material.DIAMOND || treasure == Material.EMERALD ? 
-                    1 + random.nextInt(2) : 1 + random.nextInt(4);
-                
-                ItemStack item = new ItemStack(treasure, amount);
-                player.getWorld().dropItemNaturally(dropLoc, item);
-                
-                dropLoc.getWorld().spawnParticle(
-                    Particle.TOTEM_OF_UNDYING,
-                    dropLoc,
-                    10, 1, 1, 1, 0.1
-                );
-                
-                if (counter % 3 == 0) {
-                    player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 0.5f, 1.5f);
+                // 音響効果も削減
+                if (counter % 5 == 0) {
+                    player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 0.3f, 1.5f);
                 }
                 
                 counter++;

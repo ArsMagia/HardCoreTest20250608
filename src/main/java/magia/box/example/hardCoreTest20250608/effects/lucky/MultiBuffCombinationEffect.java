@@ -16,7 +16,7 @@ public class MultiBuffCombinationEffect extends LuckyEffectBase {
     private final Random random = new Random();
 
     public MultiBuffCombinationEffect(JavaPlugin plugin) {
-        super(plugin, "バフコンビネーション", EffectRarity.LEGENDARY);
+        super(plugin, "バフコンビネーション", EffectRarity.EPIC);
     }
 
     @Override

@@ -5,6 +5,7 @@ import magia.box.example.hardCoreTest20250608.effects.base.LuckyEffectBase;
 import org.bukkit.*;
 import org.bukkit.entity.Egg;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
@@ -21,6 +22,14 @@ public class EggTaxiEffect extends LuckyEffectBase {
 
     @Override
     public String apply(Player player) {
+        // ディメンション制限チェック
+        World world = player.getWorld();
+        if (world.getEnvironment() == World.Environment.NETHER || 
+            world.getEnvironment() == World.Environment.THE_END) {
+            player.sendMessage(ChatColor.RED + "⚠ ネザー・エンドでは「卵タクシー」は無効化されます。");
+            return "ネザー・エンドでは無効化されました";
+        }
+        
         // ランダムな方向を決定（東西南北）
         Vector[] directions = {
             new Vector(1, 0, 0),   // 東
@@ -89,7 +98,7 @@ public class EggTaxiEffect extends LuckyEffectBase {
             
             @Override
             public void run() {
-                if (ticks >= 300 || !player.isOnline()) { // 15秒間
+                if (ticks >= 140 || !player.isOnline()) { // 7秒間に変更
                     player.sendMessage(ChatColor.GRAY + "卵タクシーの旅が終了しました。");
                     player.playSound(player.getLocation(), Sound.ENTITY_CHICKEN_AMBIENT, 1.0f, 0.8f);
                     this.cancel();
@@ -110,13 +119,23 @@ public class EggTaxiEffect extends LuckyEffectBase {
                 
                 player.teleport(currentLoc);
                 
-                // 移動中のパーティクル
+                // 移動中のパーティクルと卵のばらまき
                 if (ticks % 10 == 0) {
                     player.getWorld().spawnParticle(
                         Particle.CLOUD,
                         currentLoc.add(0, -1, 0),
                         5, 0.5, 0.2, 0.5, 0.02
                     );
+                }
+                
+                // 5tick（0.25秒）ごとに卵をドロップ
+                if (ticks % 5 == 0) {
+                    Location dropLoc = currentLoc.clone().add(
+                        (random.nextDouble() - 0.5) * 2,
+                        -1,
+                        (random.nextDouble() - 0.5) * 2
+                    );
+                    player.getWorld().dropItemNaturally(dropLoc, new ItemStack(Material.EGG, 1));
                 }
                 
                 ticks++;

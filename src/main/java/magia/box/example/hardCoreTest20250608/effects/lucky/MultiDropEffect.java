@@ -20,7 +20,7 @@ public class MultiDropEffect extends LuckyEffectBase implements Listener {
     private static final Set<UUID> enhancedPlayers = new HashSet<>();
 
     public MultiDropEffect(JavaPlugin plugin) {
-        super(plugin, "マルチドロップ", EffectRarity.RARE);
+        super(plugin, "マルチドロップ", EffectRarity.EPIC);
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
     }
 

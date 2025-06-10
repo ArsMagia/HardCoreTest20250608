@@ -90,14 +90,19 @@ public class PotionRainEffect extends UnluckyEffectBase {
     }
 
     private void executeRain() {
+        int playersProcessed = 0;
+        final int maxPotions = 8; // 最大ポーション数制限
+        
         for (Player target : Bukkit.getOnlinePlayers()) {
-            if (!target.isOnline()) continue;
+            if (!target.isOnline() || playersProcessed >= maxPotions) {
+                break; // パフォーマンス保護
+            }
             
-            Location loc = target.getLocation().add(0, 20, 0);
+            Location loc = target.getLocation().add(0, 15, 0); // 高度を下げる
             
-            // ランダムでDamage Splash または Poison Linger
+            // ランダムでDamage Splash または Poison Linger（確率調整）
             ItemStack potionItem;
-            if (random.nextBoolean()) {
+            if (random.nextInt(100) < 60) { // 60%の確率でダメージポーション
                 // Damage(Hurt) I Splash Potion
                 potionItem = new ItemStack(Material.SPLASH_POTION);
                 PotionMeta meta = (PotionMeta) potionItem.getItemMeta();
@@ -112,7 +117,7 @@ public class PotionRainEffect extends UnluckyEffectBase {
                 PotionMeta meta = (PotionMeta) potionItem.getItemMeta();
                 if (meta != null) {
                     meta.setBasePotionType(PotionType.POISON);
-                    meta.addCustomEffect(new PotionEffect(PotionEffectType.POISON, 200, 0), true);
+                    meta.addCustomEffect(new PotionEffect(PotionEffectType.POISON, 100, 0), true); // 持続時間削減
                     potionItem.setItemMeta(meta);
                 }
             }
@@ -123,14 +128,18 @@ public class PotionRainEffect extends UnluckyEffectBase {
             
             // より確実な落下ベクトルを設定
             org.bukkit.util.Vector velocity = new org.bukkit.util.Vector(
-                (random.nextDouble() - 0.5) * 0.2, // X軸のランダム性
-                -0.3, // 下向きの速度
-                (random.nextDouble() - 0.5) * 0.2  // Z軸のランダム性
+                (random.nextDouble() - 0.5) * 0.15, // ランダム性削減
+                -0.4, // 落下速度上昇
+                (random.nextDouble() - 0.5) * 0.15
             );
             thrownPotion.setVelocity(velocity);
             
-            // 落下音とパーティクル
-            target.getWorld().playSound(loc, Sound.ENTITY_SPLASH_POTION_THROW, 1.0f, 1.0f);
+            // 音響効果削減（4人に1人）
+            if (playersProcessed % 4 == 0) {
+                target.getWorld().playSound(loc, Sound.ENTITY_SPLASH_POTION_THROW, 0.5f, 1.0f);
+            }
+            
+            playersProcessed++;
         }
         
         Bukkit.broadcastMessage(ChatColor.DARK_RED + "☠ 毒雨が降り注いでいます！");

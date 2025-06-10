@@ -13,7 +13,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 public class HealthBoostEffect extends LuckyEffectBase {
 
     public HealthBoostEffect(JavaPlugin plugin) {
-        super(plugin, "最大体力増加", EffectRarity.RARE);
+        super(plugin, "最大体力増加", EffectRarity.UNCOMMON);
     }
 
     @Override

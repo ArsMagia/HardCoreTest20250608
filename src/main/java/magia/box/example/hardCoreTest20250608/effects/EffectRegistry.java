@@ -54,6 +54,8 @@ public class EffectRegistry {
                 luckyEffects.add(effect);
             }
         }
+        // レアリティ順でソート（LEGENDARY -> EPIC -> RARE -> UNCOMMON -> COMMON）
+        luckyEffects.sort((a, b) -> b.getRarity().ordinal() - a.getRarity().ordinal());
         return luckyEffects;
     }
 
@@ -64,6 +66,8 @@ public class EffectRegistry {
                 unluckyEffects.add(effect);
             }
         }
+        // レアリティ順でソート（LEGENDARY -> EPIC -> RARE -> UNCOMMON -> COMMON）
+        unluckyEffects.sort((a, b) -> b.getRarity().ordinal() - a.getRarity().ordinal());
         return unluckyEffects;
     }
 

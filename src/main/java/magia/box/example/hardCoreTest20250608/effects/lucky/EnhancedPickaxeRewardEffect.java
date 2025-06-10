@@ -15,7 +15,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 public class EnhancedPickaxeRewardEffect extends LuckyEffectBase {
 
     public EnhancedPickaxeRewardEffect(JavaPlugin plugin) {
-        super(plugin, "強化ピッケル獲得", EffectRarity.LEGENDARY);
+        super(plugin, "強化ピッケル獲得", EffectRarity.EPIC);
     }
 
     @Override
@@ -54,13 +54,6 @@ public class EnhancedPickaxeRewardEffect extends LuckyEffectBase {
             20, 1, 1, 1, 0.1
         );
         
-        // サーバー全体に通知
-        EffectUtils.broadcastEffectMessage(
-            player, 
-            "強化ピッケル獲得", 
-            EffectRarity.LEGENDARY, 
-            true
-        );
         
         return getDescription();
     }
