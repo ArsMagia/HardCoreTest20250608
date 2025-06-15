@@ -1,0 +1,67 @@
+<?xml version="1.0"?>
+<!DOCTYPE suppressions PUBLIC
+    "-//Checkstyle//DTD SuppressionFilter Configuration 1.2//EN"
+    "https://checkstyle.org/dtds/suppressions_1_2.dtd">
+
+<!--
+    Checkstyle抑制設定
+    テストファイルや特定の場合のルール緩和
+-->
+<suppressions>
+    <!-- ========== テストファイルの除外 ========== -->
+    <!-- テストクラスでのJavaDoc要求を緩和 -->
+    <suppress checks="JavadocMethod" files=".*Test\.java$"/>
+    <suppress checks="JavadocType" files=".*Test\.java$"/>
+    
+    <!-- テストメソッドの長さ制限緩和 -->
+    <suppress checks="MethodLength" files=".*Test\.java$"/>
+    
+    <!-- テストクラスでのマジックナンバー許可 -->
+    <suppress checks="MagicNumber" files=".*Test\.java$"/>
+    
+    <!-- テストでの複雑度制限緩和 -->
+    <suppress checks="CyclomaticComplexity" files=".*Test\.java$"/>
+    
+    <!-- ========== エフェクトクラスの除外 ========== -->
+    <!-- エフェクトクラスでのString literal重複許可 -->
+    <suppress checks="MultipleStringLiterals" files=".*Effect\.java$"/>
+    
+    <!-- エフェクトクラスでのマジックナンバー許可（座標、時間等） -->
+    <suppress checks="MagicNumber" files=".*Effect\.java$"/>
+    
+    <!-- ========== 設定ファイルクラスの除外 ========== -->
+    <!-- 設定クラスでの定数重複許可 -->
+    <suppress checks="MultipleStringLiterals" files=".*Config.*\.java$"/>
+    <suppress checks="MultipleStringLiterals" files=".*Constants\.java$"/>
+    
+    <!-- ========== Bukkitイベントハンドラーの除外 ========== -->
+    <!-- イベントハンドラーでのパラメータ数制限緩和 -->
+    <suppress checks="ParameterNumber" files=".*Listener\.java$"/>
+    
+    <!-- ========== 自動生成ファイルの除外 ========== -->
+    <!-- Mavenが生成するファイル -->
+    <suppress checks=".*" files="target[\\/].*"/>
+    
+    <!-- IDEが生成するファイル -->
+    <suppress checks=".*" files=".*\.iml$"/>
+    
+    <!-- ========== レガシーコードの一時的除外 ========== -->
+    <!-- 既存の大きなクラスの段階的改善 -->
+    <suppress checks="ClassFanOutComplexity" files="PluginManager\.java"/>
+    <suppress checks="FileLength" files="EffectRegistry\.java"/>
+    
+    <!-- 既存のユーティリティクラス -->
+    <suppress checks="HideUtilityClassConstructor" files="EffectUtils\.java"/>
+    <suppress checks="HideUtilityClassConstructor" files="EffectConstants\.java"/>
+    
+    <!-- ========== 特定メソッドの除外 ========== -->
+    <!-- toString、equals、hashCodeメソッド -->
+    <suppress checks="CyclomaticComplexity" message=".*toString.*"/>
+    <suppress checks="CyclomaticComplexity" message=".*equals.*"/>
+    <suppress checks="CyclomaticComplexity" message=".*hashCode.*"/>
+    
+    <!-- スイッチ文での複雑度（エフェクトタイプ判定等） -->
+    <suppress checks="CyclomaticComplexity" files=".*Selector\.java$"/>
+    <suppress checks="CyclomaticComplexity" files=".*Registry\.java$"/>
+    
+</suppressions>

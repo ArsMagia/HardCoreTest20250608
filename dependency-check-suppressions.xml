@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd">
+    
+    <!--
+        OWASP Dependency Check 抑制設定
+        誤検知や受容可能なリスクの除外
+    -->
+    
+    <!-- ========== Spigot API関連の除外 ========== -->
+    <!-- Spigot APIは外部提供のため、脆弱性報告を除外 -->
+    <suppress>
+        <notes>Spigot API - サーバー管理者の責任範囲</notes>
+        <gav regex="true">^org\.spigotmc:spigot-api:.*$</gav>
+        <cve>CVE-2021-44228</cve> <!-- Log4j関連の誤検知 -->
+    </suppress>
+    
+    <!-- ========== テストライブラリの除外 ========== -->
+    <!-- テスト環境でのみ使用されるライブラリ -->
+    <suppress>
+        <notes>MockBukkit - テスト環境でのみ使用</notes>
+        <gav regex="true">^com\.github\.seeseemelk:MockBukkit.*:.*$</gav>
+    </suppress>
+    
+    <suppress>
+        <notes>JUnit - テスト環境でのみ使用</notes>
+        <gav regex="true">^org\.junit\.jupiter:.*:.*$</gav>
+    </suppress>
+    
+    <suppress>
+        <notes>Mockito - テスト環境でのみ使用</notes>
+        <gav regex="true">^org\.mockito:.*:.*$</gav>
+    </suppress>
+    
+    <suppress>
+        <notes>Testcontainers - テスト環境でのみ使用</notes>
+        <gav regex="true">^org\.testcontainers:.*:.*$</gav>
+    </suppress>
+    
+    <!-- ========== 開発ツールの除外 ========== -->
+    <!-- Checkstyle、SpotBugs等の開発時ツール -->
+    <suppress>
+        <notes>Checkstyle - 開発時のみ使用</notes>
+        <gav regex="true">^com\.puppycrawl\.tools:checkstyle:.*$</gav>
+    </suppress>
+    
+    <!-- ========== 誤検知の除外 ========== -->
+    <!-- Caffeineキャッシュライブラリの誤検知 -->
+    <suppress>
+        <notes>Caffeine cache - 既知の誤検知</notes>
+        <gav regex="true">^com\.github\.ben-manes\.caffeine:caffeine:.*$</gav>
+        <vulnerabilityName>CVE-2020-15250</vulnerabilityName>
+    </suppress>
+    
+    <!-- SLF4J関連の誤検知 -->
+    <suppress>
+        <notes>SLF4J - Logback使用により対策済み</notes>
+        <gav regex="true">^org\.slf4j:.*:.*$</gav>
+        <vulnerabilityName>CVE-2021-42550</vulnerabilityName>
+    </suppress>
+    
+    <!-- ========== 受容可能なリスク ========== -->
+    <!-- Apache Commons Lang3の軽微な脆弱性 -->
+    <suppress until="2025-12-31">
+        <notes>Apache Commons Lang3 - 軽微な脆弱性、次回更新時に対応</notes>
+        <gav regex="true">^org\.apache\.commons:commons-lang3:.*$</gav>
+        <cvssBelow>4.0</cvssBelow>
+    </suppress>
+    
+    <!-- ========== プラグイン環境特有の除外 ========== -->
+    <!-- Minecraftプラグイン環境では影響しない脆弱性 -->
+    <suppress>
+        <notes>Web関連脆弱性 - プラグイン環境では不適用</notes>
+        <cve>CVE-2021-25329</cve> <!-- Apache Tomcat関連 -->
+        <cve>CVE-2021-33037</cve> <!-- Apache Tomcat関連 -->
+    </suppress>
+    
+    <suppress>
+        <notes>XML External Entity (XXE) - プラグインでXML処理なし</notes>
+        <cve>CVE-2021-40690</cve>
+    </suppress>
+    
+    <!-- ========== バージョン固有の除外 ========== -->
+    <!-- 特定バージョンでのみ発生する問題 -->
+    <suppress until="2025-06-30">
+        <notes>Micrometer - 一時的な誤検知、次回リリースで修正予定</notes>
+        <gav regex="true">^io\.micrometer:micrometer-core:1\.12\.1$</gav>
+        <cvssBelow>5.0</cvssBelow>
+    </suppress>
+    
+    <!-- ========== 開発依存関係の除外 ========== -->
+    <!-- Maven plugin関連の除外 -->
+    <suppress>
+        <notes>Maven plugins - ビルド時のみ使用</notes>
+        <gav regex="true">^org\.apache\.maven\.plugins:.*:.*$</gav>
+    </suppress>
+    
+    <suppress>
+        <notes>Jacoco - コードカバレッジツール</notes>
+        <gav regex="true">^org\.jacoco:.*:.*$</gav>
+    </suppress>
+    
+    <suppress>
+        <notes>SpotBugs - 静的解析ツール</notes>
+        <gav regex="true">^com\.github\.spotbugs:.*:.*$</gav>
+    </suppress>
+    
+</suppressions>

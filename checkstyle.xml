@@ -1,0 +1,230 @@
+<?xml version="1.0"?>
+<!DOCTYPE module PUBLIC
+    "-//Checkstyle//DTD Checkstyle Configuration 1.3//EN"
+    "https://checkstyle.org/dtds/configuration_1_3.dtd">
+
+<!--
+    HardCore Plugin Checkstyle設定
+    Java 21とSpigotプラグイン開発に最適化された品質チェック
+-->
+<module name="Checker">
+    <property name="charset" value="UTF-8"/>
+    <property name="severity" value="warning"/>
+    <property name="fileExtensions" value="java, properties, xml"/>
+
+    <!-- ========== ファイルレベルチェック ========== -->
+    <!-- ファイルサイズ制限 -->
+    <module name="FileLength">
+        <property name="max" value="2000"/>
+        <property name="fileExtensions" value="java"/>
+    </module>
+
+    <!-- 行末の空白チェック -->
+    <module name="FileTabCharacter">
+        <property name="eachLine" value="true"/>
+    </module>
+
+    <!-- 改行文字統一 -->
+    <module name="NewlineAtEndOfFile">
+        <property name="lineSeparator" value="lf"/>
+    </module>
+
+    <!-- TreeWalker: 構文木解析ベースのチェック -->
+    <module name="TreeWalker">
+        
+        <!-- ========== 命名規則 ========== -->
+        <!-- クラス名: PascalCase -->
+        <module name="TypeName">
+            <property name="format" value="^[A-Z][a-zA-Z0-9]*$"/>
+        </module>
+
+        <!-- メソッド名: camelCase -->
+        <module name="MethodName">
+            <property name="format" value="^[a-z][a-zA-Z0-9]*$"/>
+        </module>
+
+        <!-- 変数名: camelCase -->
+        <module name="LocalVariableName">
+            <property name="format" value="^[a-z][a-zA-Z0-9]*$"/>
+        </module>
+
+        <!-- フィールド名: camelCase -->
+        <module name="MemberName">
+            <property name="format" value="^[a-z][a-zA-Z0-9]*$"/>
+        </module>
+
+        <!-- 定数名: UPPER_SNAKE_CASE -->
+        <module name="ConstantName">
+            <property name="format" value="^[A-Z][A-Z0-9]*(_[A-Z0-9]+)*$"/>
+        </module>
+
+        <!-- パッケージ名: lowercase -->
+        <module name="PackageName">
+            <property name="format" value="^[a-z]+(\.[a-z][a-z0-9]*)*$"/>
+        </module>
+
+        <!-- ========== インポート ========== -->
+        <!-- 不要なインポート禁止 -->
+        <module name="UnusedImports"/>
+
+        <!-- 冗長なインポート禁止 -->
+        <module name="RedundantImport"/>
+
+        <!-- import順序チェック -->
+        <module name="ImportOrder">
+            <property name="groups" value="java,javax,org,com"/>
+            <property name="ordered" value="true"/>
+            <property name="separated" value="true"/>
+        </module>
+
+        <!-- ワイルドカードインポート制限 -->
+        <module name="AvoidStarImport">
+            <property name="excludes" value="org.bukkit.Material,org.bukkit.Sound"/>
+        </module>
+
+        <!-- ========== クラス設計 ========== -->
+        <!-- final定数の推奨 -->
+        <module name="FinalClass"/>
+
+        <!-- ユーティリティクラスのprivateコンストラクタ -->
+        <module name="HideUtilityClassConstructor"/>
+
+        <!-- インターフェースのみのクラス禁止 -->
+        <module name="InterfaceIsType"/>
+
+        <!-- 可視性修飾子の順序 -->
+        <module name="ModifierOrder"/>
+
+        <!-- 冗長修飾子のチェック -->
+        <module name="RedundantModifier"/>
+
+        <!-- ========== メソッド設計 ========== -->
+        <!-- メソッドの行数制限 -->
+        <module name="MethodLength">
+            <property name="max" value="100"/>
+            <property name="countEmpty" value="false"/>
+        </module>
+
+        <!-- パラメータ数制限 -->
+        <module name="ParameterNumber">
+            <property name="max" value="7"/>
+        </module>
+
+        <!-- 戻り値の数制限 -->
+        <module name="ReturnCount">
+            <property name="max" value="5"/>
+        </module>
+
+        <!-- ========== コーディングスタイル ========== -->
+        <!-- 配列の型宣言スタイル -->
+        <module name="ArrayTypeStyle"/>
+
+        <!-- 大括弧の配置 -->
+        <module name="LeftCurly">
+            <property name="option" value="eol"/>
+        </module>
+
+        <module name="RightCurly">
+            <property name="option" value="same"/>
+        </module>
+
+        <!-- 空ブロックのチェック -->
+        <module name="EmptyBlock">
+            <property name="option" value="text"/>
+        </module>
+
+        <!-- 中括弧の必須化 -->
+        <module name="NeedBraces"/>
+
+        <!-- ========== 空白・インデント ========== -->
+        <!-- インデント（4スペース） -->
+        <module name="Indentation">
+            <property name="basicOffset" value="4"/>
+        </module>
+
+        <!-- 演算子の空白 -->
+        <module name="WhitespaceAround">
+            <property name="allowEmptyConstructors" value="true"/>
+            <property name="allowEmptyMethods" value="true"/>
+        </module>
+
+        <!-- 括弧内の空白 -->
+        <module name="ParenPad"/>
+
+        <!-- ========== 複雑度 ========== -->
+        <!-- サイクロマティック複雑度 -->
+        <module name="CyclomaticComplexity">
+            <property name="max" value="15"/>
+        </module>
+
+        <!-- ネストの深さ -->
+        <module name="NestedForDepth">
+            <property name="max" value="3"/>
+        </module>
+
+        <module name="NestedIfDepth">
+            <property name="max" value="3"/>
+        </module>
+
+        <module name="NestedTryDepth">
+            <property name="max" value="2"/>
+        </module>
+
+        <!-- ========== コメント ========== -->
+        <!-- JavaDocの存在チェック（publicメソッドのみ） -->
+        <module name="JavadocMethod">
+            <property name="accessModifiers" value="public"/>
+            <property name="allowMissingParamTags" value="false"/>
+            <property name="allowMissingReturnTag" value="false"/>
+        </module>
+
+        <!-- クラスのJavaDoc -->
+        <module name="JavadocType">
+            <property name="scope" value="public"/>
+        </module>
+
+        <!-- ========== Spigot/Bukkit固有ルール ========== -->
+        <!-- マジックナンバーの制限（Bukkit定数は除外） -->
+        <module name="MagicNumber">
+            <property name="ignoreNumbers" value="-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 64, 100"/>
+            <property name="ignoreHashCodeMethod" value="true"/>
+            <property name="ignoreAnnotation" value="true"/>
+        </module>
+
+        <!-- String literal重複チェック -->
+        <module name="MultipleStringLiterals">
+            <property name="allowedDuplicates" value="3"/>
+            <property name="ignoreStringsRegexp" value='^("")|("§[0-9a-fk-or]")$'/>
+        </module>
+
+        <!-- ========== パフォーマンス ========== -->
+        <!-- StringBuffer vs StringBuilder -->
+        <module name="StringLiteralEquality"/>
+
+        <!-- equals()実装のチェック -->
+        <module name="EqualsHashCode"/>
+
+        <!-- ========== セキュリティ ========== -->
+        <!-- finalizers禁止 -->
+        <module name="NoFinalizer"/>
+
+        <!-- cloneの適切な実装 -->
+        <module name="SuperClone"/>
+
+        <module name="SuperFinalize"/>
+
+    </module>
+
+    <!-- ========== 除外設定 ========== -->
+    <!-- 生成されたファイルを除外 -->
+    <module name="BeforeExecutionExclusionFileFilter">
+        <property name="fileNamePattern" value=".*[\\/]target[\\/].*$"/>
+    </module>
+    
+    <!-- テストファイルの一部チェックを緩和 -->
+    <module name="SuppressionFilter">
+        <property name="file" value="checkstyle-suppressions.xml"/>
+        <property name="optional" value="true"/>
+    </module>
+
+</module>
