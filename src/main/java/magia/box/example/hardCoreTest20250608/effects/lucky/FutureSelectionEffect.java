@@ -2,6 +2,7 @@ package magia.box.example.hardCoreTest20250608.effects.lucky;
 
 import magia.box.example.hardCoreTest20250608.effects.EffectRarity;
 import magia.box.example.hardCoreTest20250608.effects.base.LuckyEffectBase;
+import magia.box.example.hardCoreTest20250608.effects.lucky.legendary.AdrenalineRushEffect;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;

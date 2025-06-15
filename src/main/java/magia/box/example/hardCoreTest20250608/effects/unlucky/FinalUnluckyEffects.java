@@ -2,20 +2,28 @@ package magia.box.example.hardCoreTest20250608.effects.unlucky;
 
 import magia.box.example.hardCoreTest20250608.effects.EffectRarity;
 import magia.box.example.hardCoreTest20250608.effects.base.UnluckyEffectBase;
-import org.bukkit.ChatColor;
-import org.bukkit.Material;
-import org.bukkit.Sound;
+import org.bukkit.*;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
+import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.util.Vector;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Random;
+import java.util.UUID;
 
 // 最終アンラッキー効果群（26-50）
 public class FinalUnluckyEffects {
     private static final Random random = new Random();
+    private static final Map<UUID, Location> previousLocations = new HashMap<>();
+    private static final Map<UUID, BukkitRunnable> mirrorTasks = new HashMap<>();
     
     // 26. ミラー効果（逆転世界）
     public static class MirrorWorldEffect extends UnluckyEffectBase {
@@ -24,22 +32,75 @@ public class FinalUnluckyEffects {
         }
         @Override
         public String apply(Player player) {
+            // 吐き気効果
             player.addPotionEffect(new PotionEffect(PotionEffectType.NAUSEA, 400, 2));
             player.sendMessage(ChatColor.LIGHT_PURPLE + "世界が鏡のように反転しました...");
-            return getDescription();
-        }
-    }
-    
-    // 27. 蒸発効果
-    public static class EvaporationEffect extends UnluckyEffectBase {
-        public EvaporationEffect(JavaPlugin plugin) {
-            super(plugin, "蒸発効果", EffectRarity.RARE);
-        }
-        @Override
-        public String apply(Player player) {
-            player.addPotionEffect(new PotionEffect(PotionEffectType.INVISIBILITY, 200, 0));
-            player.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 200, 1));
-            player.sendMessage(ChatColor.GRAY + "体が蒸発して半透明になりました...");
+            player.sendMessage(ChatColor.YELLOW + "10秒間、移動操作が逆転します！");
+            
+            // 既存のミラータスクがあれば停止
+            BukkitRunnable existingTask = mirrorTasks.get(player.getUniqueId());
+            if (existingTask != null) {
+                existingTask.cancel();
+            }
+            
+            // プレイヤーの初期位置を記録
+            previousLocations.put(player.getUniqueId(), player.getLocation().clone());
+            
+            // 操作反転タスクを開始
+            BukkitRunnable mirrorTask = new BukkitRunnable() {
+                int ticks = 0;
+                final int maxTicks = 200; // 10秒 = 200ticks
+                
+                @Override
+                public void run() {
+                    if (ticks >= maxTicks || !player.isOnline()) {
+                        // 効果終了
+                        previousLocations.remove(player.getUniqueId());
+                        mirrorTasks.remove(player.getUniqueId());
+                        if (player.isOnline()) {
+                            player.sendMessage(ChatColor.GRAY + "ミラー効果が解除されました。");
+                        }
+                        this.cancel();
+                        return;
+                    }
+                    
+                    // プレイヤーの移動を検知して反転
+                    Location currentLoc = player.getLocation();
+                    Location prevLoc = previousLocations.get(player.getUniqueId());
+                    
+                    if (prevLoc != null) {
+                        double deltaX = currentLoc.getX() - prevLoc.getX();
+                        double deltaZ = currentLoc.getZ() - prevLoc.getZ();
+                        
+                        // 移動が検知された場合（閾値0.01以上）
+                        if (Math.abs(deltaX) > 0.01 || Math.abs(deltaZ) > 0.01) {
+                            // 反転したベクトルを計算（移動距離を2倍に）
+                            Vector reversedVector = new Vector(-deltaX * 2, 0, -deltaZ * 2);
+                            
+                            // 元の位置から反転した方向に移動
+                            Location newLoc = prevLoc.clone().add(reversedVector);
+                            newLoc.setY(currentLoc.getY()); // Y座標は維持
+                            newLoc.setYaw(currentLoc.getYaw()); // 視点も維持
+                            newLoc.setPitch(currentLoc.getPitch());
+                            
+                            // テレポートで位置を補正
+                            player.teleport(newLoc);
+                            
+                            // 新しい位置を記録
+                            previousLocations.put(player.getUniqueId(), newLoc.clone());
+                        } else {
+                            // 移動していない場合は現在位置を更新
+                            previousLocations.put(player.getUniqueId(), currentLoc.clone());
+                        }
+                    }
+                    
+                    ticks += 2; // 2tick間隔で実行（0.1秒）
+                }
+            };
+            
+            mirrorTask.runTaskTimer(plugin, 0L, 2L); // 0.1秒間隔
+            mirrorTasks.put(player.getUniqueId(), mirrorTask);
+            
             return getDescription();
         }
     }
@@ -51,34 +112,9 @@ public class FinalUnluckyEffects {
         }
         @Override
         public String apply(Player player) {
-            player.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 300, 3));
-            player.addPotionEffect(new PotionEffect(PotionEffectType.RESISTANCE, 300, 1));
+            player.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 400, 3)); // 20秒間のSlowness IV
+            player.addPotionEffect(new PotionEffect(PotionEffectType.RESISTANCE, 400, 0)); // 20秒間のResistance I（軽い耐性）
             player.sendMessage(ChatColor.GRAY + "体が石のように硬くなり始めました...");
-            return getDescription();
-        }
-    }
-    
-    // 29. 重複視覚
-    public static class DoubleVisionEffect extends UnluckyEffectBase {
-        public DoubleVisionEffect(JavaPlugin plugin) {
-            super(plugin, "重複視覚", EffectRarity.COMMON);
-        }
-        @Override
-        public String apply(Player player) {
-            player.addPotionEffect(new PotionEffect(PotionEffectType.NAUSEA, 300, 1));
-            player.sendMessage(ChatColor.YELLOW + "物が二重に見えます...");
-            return getDescription();
-        }
-    }
-    
-    // 30. 時計故障
-    public static class ClockMalfunctionEffect extends UnluckyEffectBase {
-        public ClockMalfunctionEffect(JavaPlugin plugin) {
-            super(plugin, "時計故障", EffectRarity.COMMON);
-        }
-        @Override
-        public String apply(Player player) {
-            player.sendMessage(ChatColor.DARK_GRAY + "時間の感覚が狂いました...何時かわからなくなります。");
             return getDescription();
         }
     }
@@ -86,42 +122,68 @@ public class FinalUnluckyEffects {
     // 31. 影の束縛
     public static class ShadowBindingEffect extends UnluckyEffectBase {
         public ShadowBindingEffect(JavaPlugin plugin) {
-            super(plugin, "影の束縛", EffectRarity.RARE);
+            super(plugin, "影の束縛", EffectRarity.EPIC);
         }
         @Override
         public String apply(Player player) {
-            player.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 400, 2));
-            player.addPotionEffect(new PotionEffect(PotionEffectType.MINING_FATIGUE, 400, 1));
-            player.sendMessage(ChatColor.BLACK + "影に足を掴まれました...");
+            // サーバー全体に10秒の警告を開始
+            Bukkit.broadcastMessage(ChatColor.DARK_RED + "⚠️ 【警告】影の束縛が発動準備中です！");
+            Bukkit.broadcastMessage(ChatColor.YELLOW + "🕐 10秒後にサーバー全体のプレイヤーが影に束縛されます！");
+            
+            // カウントダウンタスク
+            new BukkitRunnable() {
+                int countdown = 10;
+                
+                @Override
+                public void run() {
+                    if (countdown <= 0) {
+                        // 影の束縛を実行
+                        executeShadowBinding(player);
+                        this.cancel();
+                        return;
+                    }
+                    
+                    if (countdown <= 5) {
+                        Bukkit.broadcastMessage(ChatColor.RED + "⏰ 影の束縛まで " + countdown + " 秒...");
+                    }
+                    countdown--;
+                }
+            }.runTaskTimer(plugin, 20L, 20L); // 1秒間隔
+            
             return getDescription();
+        }
+        
+        private void executeShadowBinding(Player caster) {
+            Bukkit.broadcastMessage(ChatColor.DARK_PURPLE + "🌑 影の束縛が発動しました！サーバー全体のプレイヤーが影に捕らわれます！");
+            
+            // サーバー全体のプレイヤーに効果を適用
+            for (Player target : Bukkit.getOnlinePlayers()) {
+                // 7秒間（140ティック）の効果
+                target.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 140, 2));
+                target.addPotionEffect(new PotionEffect(PotionEffectType.MINING_FATIGUE, 140, 1));
+                target.addPotionEffect(new PotionEffect(PotionEffectType.DARKNESS, 140, 0)); // Darknessエフェクト追加
+                
+                target.sendMessage(ChatColor.BLACK + "🌑 影に足を掴まれました...");
+                target.playSound(target.getLocation(), Sound.ENTITY_WITHER_AMBIENT, 1.0f, 0.5f);
+                
+                // 影のパーティクル効果
+                target.getWorld().spawnParticle(
+                    Particle.SQUID_INK,
+                    target.getLocation().add(0, 1, 0),
+                    20, 1, 1, 1, 0.1
+                );
+            }
+            
+            // 7秒後に解除メッセージ
+            new BukkitRunnable() {
+                @Override
+                public void run() {
+                    Bukkit.broadcastMessage(ChatColor.GREEN + "✨ 影の束縛が解除されました！全プレイヤーが自由になりました。");
+                }
+            }.runTaskLater(plugin, 140L); // 7秒後
         }
     }
     
-    // 32. 酸素欠乏
-    public static class OxygenDeprivationEffect extends UnluckyEffectBase {
-        public OxygenDeprivationEffect(JavaPlugin plugin) {
-            super(plugin, "酸素欠乏", EffectRarity.COMMON);
-        }
-        @Override
-        public String apply(Player player) {
-            player.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 300, 1));
-            player.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 300, 1));
-            player.sendMessage(ChatColor.BLUE + "酸素が薄くて息苦しいです...");
-            return getDescription();
-        }
-    }
-    
-    // 33. 電波障害
-    public static class RadioInterferenceEffect extends UnluckyEffectBase {
-        public RadioInterferenceEffect(JavaPlugin plugin) {
-            super(plugin, "電波障害", EffectRarity.COMMON);
-        }
-        @Override
-        public String apply(Player player) {
-            player.sendMessage(ChatColor.GRAY + "電波障害により通信が困難になりました...");
-            return getDescription();
-        }
-    }
     
     // 34. 磁力異常
     public static class MagneticAnomalyEffect extends UnluckyEffectBase {
@@ -150,18 +212,6 @@ public class FinalUnluckyEffects {
         }
     }
     
-    // 35. 幻影の痛み
-    public static class PhantomPainEffect extends UnluckyEffectBase {
-        public PhantomPainEffect(JavaPlugin plugin) {
-            super(plugin, "幻影の痛み", EffectRarity.COMMON);
-        }
-        @Override
-        public String apply(Player player) {
-            player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_HURT, 1.0f, 1.0f);
-            player.sendMessage(ChatColor.RED + "幻影の痛みを感じます...でも実際には怪我していません。");
-            return getDescription();
-        }
-    }
     
     // 36-50: シンプルな効果をまとめて定義
     public static class QuickDebuffEffect extends UnluckyEffectBase {
@@ -183,17 +233,11 @@ public class FinalUnluckyEffects {
     }
     
     // ファクトリーメソッドで残りの効果を生成
-    public static QuickDebuffEffect createSlownessVariant(JavaPlugin plugin) {
-        return new QuickDebuffEffect(plugin, "重い足", PotionEffectType.SLOWNESS);
-    }
     
     public static QuickDebuffEffect createWeaknessVariant(JavaPlugin plugin) {
         return new QuickDebuffEffect(plugin, "力の減退", PotionEffectType.WEAKNESS);
     }
     
-    public static QuickDebuffEffect createMiningFatigueVariant(JavaPlugin plugin) {
-        return new QuickDebuffEffect(plugin, "採掘疲労", PotionEffectType.MINING_FATIGUE);
-    }
     
     public static QuickDebuffEffect createHungerVariant(JavaPlugin plugin) {
         return new QuickDebuffEffect(plugin, "激しい空腹", PotionEffectType.HUNGER);
@@ -203,28 +247,61 @@ public class FinalUnluckyEffects {
         return new QuickDebuffEffect(plugin, "めまい", PotionEffectType.NAUSEA);
     }
     
-    public static QuickDebuffEffect createBlindnessVariant(JavaPlugin plugin) {
-        return new QuickDebuffEffect(plugin, "一時失明", PotionEffectType.BLINDNESS);
+    
+    public static class LightPoisonEffect extends UnluckyEffectBase {
+        public LightPoisonEffect(JavaPlugin plugin) {
+            super(plugin, "軽い毒", EffectRarity.COMMON);
+        }
+        
+        @Override
+        public String apply(Player player) {
+            player.addPotionEffect(new PotionEffect(PotionEffectType.POISON, 160, 0)); // 8秒
+            player.sendMessage(ChatColor.RED + "軽い毒の効果を受けました!");
+            return getDescription();
+        }
     }
     
-    public static QuickDebuffEffect createPoisonVariant(JavaPlugin plugin) {
-        return new QuickDebuffEffect(plugin, "軽い毒", PotionEffectType.POISON);
-    }
-    
-    public static QuickDebuffEffect createWitherVariant(JavaPlugin plugin) {
-        return new QuickDebuffEffect(plugin, "衰弱", PotionEffectType.WITHER);
+    public static class WitherEffect extends UnluckyEffectBase {
+        public WitherEffect(JavaPlugin plugin) {
+            super(plugin, "衰弱", EffectRarity.COMMON);
+        }
+        
+        @Override
+        public String apply(Player player) {
+            player.addPotionEffect(new PotionEffect(PotionEffectType.WITHER, 160, 0)); // 8秒
+            player.sendMessage(ChatColor.RED + "衰弱の効果を受けました!");
+            return getDescription();
+        }
     }
     
     public static QuickDebuffEffect createLevitationVariant(JavaPlugin plugin) {
         return new QuickDebuffEffect(plugin, "軽い浮遊", PotionEffectType.LEVITATION);
     }
     
-    public static QuickDebuffEffect createUnluckVariant(JavaPlugin plugin) {
-        return new QuickDebuffEffect(plugin, "不幸", PotionEffectType.UNLUCK);
+    public static class UnluckEffect extends UnluckyEffectBase {
+        public UnluckEffect(JavaPlugin plugin) {
+            super(plugin, "不幸", EffectRarity.RARE);
+        }
+        
+        @Override
+        public String apply(Player player) {
+            player.addPotionEffect(new PotionEffect(PotionEffectType.UNLUCK, 300, 0));
+            player.sendMessage(ChatColor.RED + "不幸の効果を受けました!");
+            return getDescription();
+        }
     }
     
-    public static QuickDebuffEffect createDarknessVariant(JavaPlugin plugin) {
-        return new QuickDebuffEffect(plugin, "闇の帳", PotionEffectType.DARKNESS);
+    public static class DarknessEffect extends UnluckyEffectBase {
+        public DarknessEffect(JavaPlugin plugin) {
+            super(plugin, "闇の帳", EffectRarity.COMMON);
+        }
+        
+        @Override
+        public String apply(Player player) {
+            player.addPotionEffect(new PotionEffect(PotionEffectType.DARKNESS, 100, 0)); // 5秒
+            player.sendMessage(ChatColor.RED + "闇の帳の効果を受けました!");
+            return getDescription();
+        }
     }
     
     // 追加の創造的効果
@@ -251,42 +328,4 @@ public class FinalUnluckyEffects {
         }
     }
     
-    public static class SoundSpamEffect extends UnluckyEffectBase {
-        public SoundSpamEffect(JavaPlugin plugin) {
-            super(plugin, "音響スパム", EffectRarity.RARE);
-        }
-        
-        @Override
-        public String apply(Player player) {
-            org.bukkit.scheduler.BukkitRunnable task = new org.bukkit.scheduler.BukkitRunnable() {
-                int count = 0;
-                @Override
-                public void run() {
-                    if (count >= 20 || !player.isOnline()) {
-                        this.cancel();
-                        return;
-                    }
-                    Sound[] sounds = {Sound.ENTITY_CHICKEN_AMBIENT, Sound.ENTITY_COW_AMBIENT, Sound.ENTITY_PIG_AMBIENT};
-                    player.playSound(player.getLocation(), sounds[random.nextInt(sounds.length)], 0.5f, 1.0f);
-                    count++;
-                }
-            };
-            task.runTaskTimer(plugin, 0L, 5L);
-            player.sendMessage(ChatColor.YELLOW + "動物の鳴き声が止まりません!");
-            return getDescription();
-        }
-    }
-    
-    public static class FakeDamageEffect extends UnluckyEffectBase {
-        public FakeDamageEffect(JavaPlugin plugin) {
-            super(plugin, "偽ダメージ", EffectRarity.COMMON);
-        }
-        
-        @Override
-        public String apply(Player player) {
-            player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_HURT, 1.0f, 1.0f);
-            player.sendMessage(ChatColor.RED + "ダメージを受けた気がしますが...気のせいでした。");
-            return getDescription();
-        }
-    }
 }

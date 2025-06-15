@@ -37,7 +37,6 @@ public class ChickenTransformEffect extends UnluckyEffectBase {
         
         // 初期通知とエフェクト
         player.sendMessage(ChatColor.YELLOW + "🐔 チキンに変身してしまいました！20秒間、移動以外何もできません。");
-        player.sendMessage(ChatColor.GOLD + "✨ 他のプレイヤーにはチキンとして見えています！");
         
         // 初期音効とパーティクル
         player.playSound(player.getLocation(), Sound.ENTITY_CHICKEN_AMBIENT, 1.0f, 1.0f);

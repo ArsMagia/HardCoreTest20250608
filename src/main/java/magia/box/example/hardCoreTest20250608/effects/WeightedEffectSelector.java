@@ -18,7 +18,7 @@ public class WeightedEffectSelector {
 
     public LuckyEffect selectRandom() {
         if (effects.isEmpty()) {
-            return null;
+            throw new IllegalStateException("エフェクトが登録されていません");
         }
 
         int randomValue = random.nextInt(totalWeight);
@@ -41,6 +41,20 @@ public class WeightedEffectSelector {
     }
 
     public int size() {
+        return effects.size();
+    }
+
+    /**
+     * テスト用のメソッド - 総重みを取得
+     */
+    public int getTotalWeight() {
+        return totalWeight;
+    }
+
+    /**
+     * テスト用のメソッド - エフェクト数を取得
+     */
+    public int getEffectCount() {
         return effects.size();
     }
 }

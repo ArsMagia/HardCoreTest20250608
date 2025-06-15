@@ -1,6 +1,7 @@
 package magia.box.example.hardCoreTest20250608.effects.lucky;
 
 import magia.box.example.hardCoreTest20250608.effects.EffectRarity;
+import magia.box.example.hardCoreTest20250608.effects.FutureGuaranteeManager;
 import magia.box.example.hardCoreTest20250608.effects.base.LuckyEffectBase;
 import org.bukkit.*;
 import org.bukkit.block.Block;
@@ -62,12 +63,41 @@ public class MalphiteUltEffect extends LuckyEffectBase {
     }
     
     private String performNormalRush(Player player) {
+        // 将来保証システムの確認
+        FutureGuaranteeManager guaranteeManager = FutureGuaranteeManager.getInstance();
+        boolean hasGuarantee = guaranteeManager != null && 
+                              guaranteeManager.hasGuarantee(player) &&
+                              guaranteeManager.getGuaranteeType(player) == FutureGuaranteeManager.GuaranteeType.MALPHITE_ULT;
+        
         // 半径30ブロック以内の最も近いモブを探す
         LivingEntity nearestMob = findNearestMob(player, 30.0);
         
         if (nearestMob == null) {
-            player.sendMessage(ChatColor.YELLOW + "半径30ブロック以内にモブが見つかりません。");
-            return "ターゲットが見つかりませんでした";
+            if (hasGuarantee) {
+                // 保証がある場合は強制的に遠くのターゲットを探す
+                nearestMob = findNearestMob(player, 40.0); // 40ブロックまで拡張
+                if (nearestMob != null) {
+                    player.sendMessage(ChatColor.GOLD + "🔮 将来保証により、遠距離のターゲットを発見しました！");
+                    guaranteeManager.consumeGuarantee(player);
+                } else {
+                    // それでも見つからない場合は保証を維持
+                    player.sendMessage(ChatColor.YELLOW + "🔮 将来保証はまだ有効です。次回必ず発動します。");
+                    return "保証により次回発動確定";
+                }
+            } else {
+                // 保証がない場合は次回保証を設定
+                if (guaranteeManager != null) {
+                    guaranteeManager.setGuarantee(player, FutureGuaranteeManager.GuaranteeType.MALPHITE_ULT, 1);
+                    player.sendMessage(ChatColor.GOLD + "🔮 ターゲットが見つかりませんでした。次回のマルファイトのULTは必ず発動します！");
+                } else {
+                    player.sendMessage(ChatColor.YELLOW + "半径30ブロック以内にモブが見つかりません。");
+                }
+                return "次回発動保証が設定されました";
+            }
+        } else if (hasGuarantee) {
+            // ターゲットが見つかり、保証もある場合は保証を消費
+            guaranteeManager.consumeGuarantee(player);
+            player.sendMessage(ChatColor.GOLD + "🔮 将来保証により確実に発動しました！");
         }
         
         // ターゲットへの突進

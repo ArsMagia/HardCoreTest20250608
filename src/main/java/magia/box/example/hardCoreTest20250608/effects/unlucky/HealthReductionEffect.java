@@ -13,7 +13,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 public class HealthReductionEffect extends UnluckyEffectBase {
 
     public HealthReductionEffect(JavaPlugin plugin) {
-        super(plugin, "最大体力減少", EffectRarity.RARE);
+        super(plugin, "最大体力減少", EffectRarity.EPIC);
     }
 
     @Override

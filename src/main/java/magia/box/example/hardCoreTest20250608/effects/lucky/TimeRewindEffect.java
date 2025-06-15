@@ -1,7 +1,9 @@
 package magia.box.example.hardCoreTest20250608.effects.lucky;
 
 import magia.box.example.hardCoreTest20250608.effects.EffectRarity;
+import magia.box.example.hardCoreTest20250608.effects.EffectType;
 import magia.box.example.hardCoreTest20250608.effects.base.LuckyEffectBase;
+import magia.box.example.hardCoreTest20250608.effects.core.EffectRegistration;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Particle;
@@ -15,6 +17,13 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+@EffectRegistration(
+    id = "time_rewind",
+    type = EffectType.LUCKY,
+    rarity = EffectRarity.EPIC,
+    description = "7秒前の状態に時間を巻き戻す究極の救済効果",
+    category = "temporal"
+)
 public class TimeRewindEffect extends LuckyEffectBase {
     
     private static final Map<UUID, PlayerSnapshot> snapshots = new HashMap<>();

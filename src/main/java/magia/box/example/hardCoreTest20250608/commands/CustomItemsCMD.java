@@ -108,6 +108,10 @@ public class CustomItemsCMD implements CommandExecutor, Listener {
         ItemStack multiTool = ItemRegistryAccessor.getSpecialMultiToolItem().createItem();
         addItemToGUI(gui, slot++, multiTool, "作業台・エンダーチェスト・金床・醸造台をポータブル利用");
 
+        // 9. ヒールキット
+        ItemStack healKit = ItemRegistryAccessor.getHealKitItem().createItem();
+        addItemToGUI(gui, slot++, healKit, "プレイヤーを左クリックでRegeneration II付与");
+
         // 空きスロットを装飾
         fillEmptySlots(gui, slot);
     }
@@ -247,6 +251,7 @@ public class CustomItemsCMD implements CommandExecutor, Listener {
             case IRON_PICKAXE -> ItemRegistryAccessor.getEnhancedPickaxeItem().createItem();
             case COMPASS -> ItemRegistryAccessor.getPlayerTrackingCompassItem().createItem();
             case TRIPWIRE_HOOK -> ItemRegistryAccessor.getSpecialMultiToolItem().createItem();
+            case SHEARS -> ItemRegistryAccessor.getHealKitItem().createItem();
             default -> null;
         };
     }

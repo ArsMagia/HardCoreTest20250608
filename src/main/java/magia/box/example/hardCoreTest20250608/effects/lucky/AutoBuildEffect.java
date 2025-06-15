@@ -84,7 +84,7 @@ public class AutoBuildEffect extends LuckyEffectBase {
                 
                 step++;
             }
-        }.runTaskTimer(plugin, 0L, 8L); // 少し早めの間隔
+        }.runTaskTimer(plugin, 0L, 12L); // パフォーマンス最適化：間隔を12ティックに変更
         
         return getDescription() + "（" + selectedType + "）";
     }
@@ -107,61 +107,79 @@ public class AutoBuildEffect extends LuckyEffectBase {
     }
     
     /**
-     * 豪華な邸宅を建設（10x10の大きな家）
+     * 豪華な邸宅を建設（10x10の大きな家）- パフォーマンス最適化版
      */
     private void buildLargeMansion(Location center, int step) {
+        int blocksBuilt = 0;
+        final int MAX_BLOCKS_PER_TICK = 15; // 1ティックあたりの最大ブロック数制限
+        
         if (step < 10) {
             // 床を作成（10x10）
-            for (int x = 0; x < 10; x++) {
-                for (int z = 0; z < 10; z++) {
+            for (int x = 0; x < 10 && blocksBuilt < MAX_BLOCKS_PER_TICK; x++) {
+                for (int z = 0; z < 10 && blocksBuilt < MAX_BLOCKS_PER_TICK; z++) {
                     Block block = center.getWorld().getBlockAt(center.getBlockX() + x, center.getBlockY(), center.getBlockZ() + z);
-                    if (block.getType() == Material.AIR) {
-                        // チェック模様の床
-                        Material floorMaterial = ((x + z) % 2 == 0) ? Material.QUARTZ_BLOCK : Material.POLISHED_BLACKSTONE;
+                    // チェック模様の床
+                    Material floorMaterial = ((x + z) % 2 == 0) ? Material.QUARTZ_BLOCK : Material.POLISHED_BLACKSTONE;
+                    // 不要な変更をスキップ（最適化）
+                    if (!block.getType().equals(floorMaterial)) {
                         block.setType(floorMaterial);
+                        blocksBuilt++;
                     }
                 }
             }
         } else if (step < 30) {
-            // 壁を作成（高さ5）
+            // 壁を作成（高さ5）- 段階化処理
             int y = (step - 10) / 4;
             if (y < 5) {
-                for (int x = 0; x < 10; x++) {
-                    for (int z = 0; z < 10; z++) {
+                for (int x = 0; x < 10 && blocksBuilt < MAX_BLOCKS_PER_TICK; x++) {
+                    for (int z = 0; z < 10 && blocksBuilt < MAX_BLOCKS_PER_TICK; z++) {
                         if (x == 0 || x == 9 || z == 0 || z == 9) {
                             Block block = center.getWorld().getBlockAt(center.getBlockX() + x, center.getBlockY() + y + 1, center.getBlockZ() + z);
+                            Material targetMaterial;
+                            
                             if (x == 4 && z == 0 && y == 0) {
-                                block.setType(Material.OAK_DOOR); // 正面玄関
+                                targetMaterial = Material.OAK_DOOR; // 正面玄関
                             } else if (x == 9 && z == 4 && y == 0) {
-                                block.setType(Material.OAK_DOOR); // 側面入口
+                                targetMaterial = Material.OAK_DOOR; // 側面入口
                             } else if ((x == 2 || x == 7) && z == 0 && y == 2) {
-                                block.setType(Material.GLASS); // 窓
+                                targetMaterial = Material.GLASS; // 窓
                             } else if (x == 0 && (z == 2 || z == 7) && y == 2) {
-                                block.setType(Material.GLASS); // 側面窓
+                                targetMaterial = Material.GLASS; // 側面窓
                             } else {
                                 // 石レンガとコンクリートの組み合わせ
-                                Material wallMaterial = (y == 0 || y == 4) ? Material.STONE_BRICKS : Material.WHITE_CONCRETE;
-                                block.setType(wallMaterial);
+                                targetMaterial = (y == 0 || y == 4) ? Material.STONE_BRICKS : Material.WHITE_CONCRETE;
+                            }
+                            
+                            // 不要な変更をスキップ（最適化）
+                            if (!block.getType().equals(targetMaterial)) {
+                                block.setType(targetMaterial);
+                                blocksBuilt++;
                             }
                         }
                     }
                 }
             }
         } else {
-            // 屋根を作成（段差のある豪華な屋根）
+            // 屋根を作成（段差のある豪華な屋根）- 段階化処理
             int roofStep = step - 30;
-            for (int x = 0; x < 10; x++) {
-                for (int z = 0; z < 10; z++) {
+            for (int x = 0; x < 10 && blocksBuilt < MAX_BLOCKS_PER_TICK; x++) {
+                for (int z = 0; z < 10 && blocksBuilt < MAX_BLOCKS_PER_TICK; z++) {
                     if (roofStep < 5) {
                         // 第一層屋根
                         Block block = center.getWorld().getBlockAt(center.getBlockX() + x, center.getBlockY() + 6, center.getBlockZ() + z);
-                        block.setType(Material.DARK_OAK_STAIRS);
+                        if (!block.getType().equals(Material.DARK_OAK_STAIRS)) {
+                            block.setType(Material.DARK_OAK_STAIRS);
+                            blocksBuilt++;
+                        }
                     } else {
                         // 煙突と装飾
                         if (x == 8 && z == 8) {
-                            for (int chimney = 7; chimney <= 9; chimney++) {
+                            for (int chimney = 7; chimney <= 9 && blocksBuilt < MAX_BLOCKS_PER_TICK; chimney++) {
                                 Block chimneyBlock = center.getWorld().getBlockAt(center.getBlockX() + x, center.getBlockY() + chimney, center.getBlockZ() + z);
-                                chimneyBlock.setType(Material.BRICKS);
+                                if (!chimneyBlock.getType().equals(Material.BRICKS)) {
+                                    chimneyBlock.setType(Material.BRICKS);
+                                    blocksBuilt++;
+                                }
                             }
                         }
                     }
@@ -171,33 +189,49 @@ public class AutoBuildEffect extends LuckyEffectBase {
     }
     
     /**
-     * 長い橋を建設（20ブロックの長さ）
+     * 長い橋を建設（20ブロックの長さ）- パフォーマンス最適化版
      */
     private void buildLongBridge(Location center, int step) {
+        int blocksBuilt = 0;
+        final int MAX_BLOCKS_PER_TICK = 15; // 1ティックあたりの最大ブロック数制限
+        
         int length = Math.min(step, 20);
-        for (int x = 0; x <= length; x++) {
+        for (int x = 0; x <= length && blocksBuilt < MAX_BLOCKS_PER_TICK; x++) {
             // メインの橋部分（3ブロック幅）
-            for (int z = -1; z <= 1; z++) {
+            for (int z = -1; z <= 1 && blocksBuilt < MAX_BLOCKS_PER_TICK; z++) {
                 Block block = center.getWorld().getBlockAt(center.getBlockX() + x, center.getBlockY(), center.getBlockZ() + z);
                 Material bridgeMaterial = (z == 0) ? Material.STONE_BRICKS : Material.COBBLESTONE;
-                block.setType(bridgeMaterial);
+                // 不要な変更をスキップ（最適化）
+                if (!block.getType().equals(bridgeMaterial)) {
+                    block.setType(bridgeMaterial);
+                    blocksBuilt++;
+                }
             }
             
             // 手すりと装飾柱
-            if (x > 0 && x < length) {
+            if (x > 0 && x < length && blocksBuilt < MAX_BLOCKS_PER_TICK) {
                 // 手すり
-                for (int z = -1; z <= 1; z += 2) {
+                for (int z = -1; z <= 1 && blocksBuilt < MAX_BLOCKS_PER_TICK; z += 2) {
                     Block rail1 = center.getWorld().getBlockAt(center.getBlockX() + x, center.getBlockY() + 1, center.getBlockZ() + z);
                     Block rail2 = center.getWorld().getBlockAt(center.getBlockX() + x, center.getBlockY() + 2, center.getBlockZ() + z);
-                    rail1.setType(Material.STONE_BRICK_WALL);
-                    rail2.setType(Material.STONE_BRICK_WALL);
+                    if (!rail1.getType().equals(Material.STONE_BRICK_WALL)) {
+                        rail1.setType(Material.STONE_BRICK_WALL);
+                        blocksBuilt++;
+                    }
+                    if (!rail2.getType().equals(Material.STONE_BRICK_WALL) && blocksBuilt < MAX_BLOCKS_PER_TICK) {
+                        rail2.setType(Material.STONE_BRICK_WALL);
+                        blocksBuilt++;
+                    }
                 }
                 
                 // 装飾柱（4ブロックごと）
                 if (x % 4 == 0) {
-                    for (int z = -1; z <= 1; z += 2) {
+                    for (int z = -1; z <= 1 && blocksBuilt < MAX_BLOCKS_PER_TICK; z += 2) {
                         Block pillar = center.getWorld().getBlockAt(center.getBlockX() + x, center.getBlockY() + 3, center.getBlockZ() + z);
-                        pillar.setType(Material.LANTERN);
+                        if (!pillar.getType().equals(Material.LANTERN)) {
+                            pillar.setType(Material.LANTERN);
+                            blocksBuilt++;
+                        }
                     }
                 }
             }
@@ -205,48 +239,63 @@ public class AutoBuildEffect extends LuckyEffectBase {
     }
     
     /**
-     * 高い塔を建設（16ブロックの高さ）
+     * 高い塔を建設（16ブロックの高さ）- パフォーマンス最適化版
      */
     private void buildHighTower(Location center, int step) {
+        int blocksBuilt = 0;
+        final int MAX_BLOCKS_PER_TICK = 15; // 1ティックあたりの最大ブロック数制限
+        
         int height = Math.min(step, 16);
-        for (int y = 0; y <= height; y++) {
-            for (int x = -2; x <= 2; x++) {
-                for (int z = -2; z <= 2; z++) {
+        for (int y = 0; y <= height && blocksBuilt < MAX_BLOCKS_PER_TICK; y++) {
+            for (int x = -2; x <= 2 && blocksBuilt < MAX_BLOCKS_PER_TICK; x++) {
+                for (int z = -2; z <= 2 && blocksBuilt < MAX_BLOCKS_PER_TICK; z++) {
                     boolean isWall = (x == -2 || x == 2 || z == -2 || z == 2);
                     boolean isCenter = (x == 0 && z == 0);
                     
                     if (isWall || (y == 0)) { // 壁または床
                         Block block = center.getWorld().getBlockAt(center.getBlockX() + x, center.getBlockY() + y, center.getBlockZ() + z);
+                        Material targetMaterial;
                         
                         if (y == 0) {
-                            block.setType(Material.STONE_BRICKS); // 床
+                            targetMaterial = Material.STONE_BRICKS; // 床
                         } else if (y % 4 == 0 && !isCenter) {
-                            block.setType(Material.CHISELED_STONE_BRICKS); // 装飾層
+                            targetMaterial = Material.CHISELED_STONE_BRICKS; // 装飾層
                         } else if (isWall) {
-                            block.setType(Material.STONE_BRICKS); // 壁
+                            targetMaterial = Material.STONE_BRICKS; // 壁
+                        } else {
+                            continue; // スキップ
                         }
                         
                         // 入口（地上レベル）
                         if (x == 0 && z == -2 && y == 1) {
-                            block.setType(Material.AIR);
+                            targetMaterial = Material.AIR;
                         }
                         
                         // 窓（4階層ごと）
                         if (y % 8 == 4 && isWall && !isCenter) {
                             if ((x == 0 && (z == -2 || z == 2)) || (z == 0 && (x == -2 || x == 2))) {
-                                block.setType(Material.GLASS);
+                                targetMaterial = Material.GLASS;
                             }
+                        }
+                        
+                        // 不要な変更をスキップ（最適化）
+                        if (!block.getType().equals(targetMaterial)) {
+                            block.setType(targetMaterial);
+                            blocksBuilt++;
                         }
                     }
                 }
             }
             
             // 最上階に装飾的な屋根
-            if (y == height && height >= 15) {
-                for (int x = -1; x <= 1; x++) {
-                    for (int z = -1; z <= 1; z++) {
+            if (y == height && height >= 15 && blocksBuilt < MAX_BLOCKS_PER_TICK) {
+                for (int x = -1; x <= 1 && blocksBuilt < MAX_BLOCKS_PER_TICK; x++) {
+                    for (int z = -1; z <= 1 && blocksBuilt < MAX_BLOCKS_PER_TICK; z++) {
                         Block roofBlock = center.getWorld().getBlockAt(center.getBlockX() + x, center.getBlockY() + y + 1, center.getBlockZ() + z);
-                        roofBlock.setType(Material.STONE_BRICK_STAIRS);
+                        if (!roofBlock.getType().equals(Material.STONE_BRICK_STAIRS)) {
+                            roofBlock.setType(Material.STONE_BRICK_STAIRS);
+                            blocksBuilt++;
+                        }
                     }
                 }
             }
@@ -254,16 +303,22 @@ public class AutoBuildEffect extends LuckyEffectBase {
     }
     
     /**
-     * 深い井戸を建設（深さ6ブロック、周囲の構造も大型化）
+     * 深い井戸を建設（深さ6ブロック、周囲の構造も大型化）- パフォーマンス最適化版
      */
     private void buildDeepWell(Location center, int step) {
+        int blocksBuilt = 0;
+        final int MAX_BLOCKS_PER_TICK = 15; // 1ティックあたりの最大ブロック数制限
+        
         if (step < 6) {
             // 底を作成（6ブロック深く、3x3）
             int depth = step + 1;
-            for (int x = -1; x <= 1; x++) {
-                for (int z = -1; z <= 1; z++) {
+            for (int x = -1; x <= 1 && blocksBuilt < MAX_BLOCKS_PER_TICK; x++) {
+                for (int z = -1; z <= 1 && blocksBuilt < MAX_BLOCKS_PER_TICK; z++) {
                     Block block = center.getWorld().getBlockAt(center.getBlockX() + x, center.getBlockY() - depth, center.getBlockZ() + z);
-                    block.setType(Material.MOSSY_COBBLESTONE);
+                    if (!block.getType().equals(Material.MOSSY_COBBLESTONE)) {
+                        block.setType(Material.MOSSY_COBBLESTONE);
+                        blocksBuilt++;
+                    }
                 }
             }
         } else if (step < 24) {
@@ -271,8 +326,8 @@ public class AutoBuildEffect extends LuckyEffectBase {
             int wallStep = step - 6;
             int y = wallStep / 6;
             if (y < 3) {
-                for (int x = -2; x <= 2; x++) {
-                    for (int z = -2; z <= 2; z++) {
+                for (int x = -2; x <= 2 && blocksBuilt < MAX_BLOCKS_PER_TICK; x++) {
+                    for (int z = -2; z <= 2 && blocksBuilt < MAX_BLOCKS_PER_TICK; z++) {
                         boolean isWallPosition = (x == -2 || x == 2 || z == -2 || z == 2);
                         boolean isInnerWall = (x == -1 || x == 1 || z == -1 || z == 1) && 
                                              !(x == 0 || z == 0);
@@ -280,12 +335,18 @@ public class AutoBuildEffect extends LuckyEffectBase {
                         if (isWallPosition) {
                             // 外壁
                             Block block = center.getWorld().getBlockAt(center.getBlockX() + x, center.getBlockY() + y, center.getBlockZ() + z);
-                            block.setType(Material.STONE_BRICKS);
+                            if (!block.getType().equals(Material.STONE_BRICKS)) {
+                                block.setType(Material.STONE_BRICKS);
+                                blocksBuilt++;
+                            }
                         } else if (isInnerWall) {
                             // 井戸の内壁（深さ分）
-                            for (int depth = 1; depth <= 6; depth++) {
+                            for (int depth = 1; depth <= 6 && blocksBuilt < MAX_BLOCKS_PER_TICK; depth++) {
                                 Block wallBlock = center.getWorld().getBlockAt(center.getBlockX() + x, center.getBlockY() - depth + y, center.getBlockZ() + z);
-                                wallBlock.setType(Material.COBBLESTONE);
+                                if (!wallBlock.getType().equals(Material.COBBLESTONE)) {
+                                    wallBlock.setType(Material.COBBLESTONE);
+                                    blocksBuilt++;
+                                }
                             }
                         }
                     }
@@ -293,34 +354,48 @@ public class AutoBuildEffect extends LuckyEffectBase {
             }
         } else if (step < 30) {
             // 屋根構造を追加
-            for (int x = -2; x <= 2; x++) {
-                for (int z = -2; z <= 2; z++) {
+            for (int x = -2; x <= 2 && blocksBuilt < MAX_BLOCKS_PER_TICK; x++) {
+                for (int z = -2; z <= 2 && blocksBuilt < MAX_BLOCKS_PER_TICK; z++) {
                     if (x == -2 || x == 2 || z == -2 || z == 2) {
                         Block roofBlock = center.getWorld().getBlockAt(center.getBlockX() + x, center.getBlockY() + 4, center.getBlockZ() + z);
-                        roofBlock.setType(Material.DARK_OAK_PLANKS);
+                        if (!roofBlock.getType().equals(Material.DARK_OAK_PLANKS)) {
+                            roofBlock.setType(Material.DARK_OAK_PLANKS);
+                            blocksBuilt++;
+                        }
                     }
                 }
             }
             
             // 支柱
-            for (int corner = 0; corner < 4; corner++) {
+            for (int corner = 0; corner < 4 && blocksBuilt < MAX_BLOCKS_PER_TICK; corner++) {
                 int x = (corner % 2 == 0) ? -2 : 2;
                 int z = (corner < 2) ? -2 : 2;
-                for (int pillarY = 1; pillarY <= 3; pillarY++) {
+                for (int pillarY = 1; pillarY <= 3 && blocksBuilt < MAX_BLOCKS_PER_TICK; pillarY++) {
                     Block pillar = center.getWorld().getBlockAt(center.getBlockX() + x, center.getBlockY() + pillarY, center.getBlockZ() + z);
-                    pillar.setType(Material.DARK_OAK_LOG);
+                    if (!pillar.getType().equals(Material.DARK_OAK_LOG)) {
+                        pillar.setType(Material.DARK_OAK_LOG);
+                        blocksBuilt++;
+                    }
                 }
             }
         } else {
             // 水を追加
-            for (int depth = 1; depth <= 5; depth++) {
+            for (int depth = 1; depth <= 5 && blocksBuilt < MAX_BLOCKS_PER_TICK; depth++) {
                 Block water = center.getWorld().getBlockAt(center.getBlockX(), center.getBlockY() - depth, center.getBlockZ());
-                water.setType(Material.WATER);
+                if (!water.getType().equals(Material.WATER)) {
+                    water.setType(Material.WATER);
+                    blocksBuilt++;
+                }
             }
             
             // バケツとロープの装飾
-            Block bucket = center.getWorld().getBlockAt(center.getBlockX() + 1, center.getBlockY() + 1, center.getBlockZ());
-            bucket.setType(Material.CAULDRON);
+            if (blocksBuilt < MAX_BLOCKS_PER_TICK) {
+                Block bucket = center.getWorld().getBlockAt(center.getBlockX() + 1, center.getBlockY() + 1, center.getBlockZ());
+                if (!bucket.getType().equals(Material.CAULDRON)) {
+                    bucket.setType(Material.CAULDRON);
+                    blocksBuilt++;
+                }
+            }
         }
     }
     

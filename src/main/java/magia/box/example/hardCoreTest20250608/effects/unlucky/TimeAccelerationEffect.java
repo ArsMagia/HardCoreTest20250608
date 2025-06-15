@@ -15,14 +15,14 @@ public class TimeAccelerationEffect extends UnluckyEffectBase {
 
     @Override
     public String apply(Player player) {
-        player.sendMessage(ChatColor.YELLOW + "時間が加速しました！30秒間、空腹度と体力の減少が速くなります。");
+        player.sendMessage(ChatColor.YELLOW + "時間が加速しました！15秒間、空腹度と体力の減少が速くなります。");
         
         new BukkitRunnable() {
             int counter = 0;
             
             @Override
             public void run() {
-                if (counter >= 30 || !player.isOnline()) {
+                if (counter >= 15 || !player.isOnline()) {
                     player.sendMessage(ChatColor.GRAY + "時間の流れが正常に戻りました。");
                     this.cancel();
                     return;

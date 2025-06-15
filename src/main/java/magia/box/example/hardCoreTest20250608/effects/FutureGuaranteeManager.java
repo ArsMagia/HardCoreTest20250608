@@ -107,7 +107,9 @@ public class FutureGuaranteeManager {
         RUSH_ADDICTION,         // 突進中毒  
         TIME_LEAP,              // タイムリープ
         ADRENALINE_RUSH,        // アドレナリンラッシュ
-        FUTURE_VISION           // 未来視
+        FUTURE_VISION,          // 未来視
+        MALPHITE_ULT,           // マルファイトのULT
+        UNLUCKY_CALAMITY        // もたらされた災厄（アンラッキー保証）
     }
     
     /**

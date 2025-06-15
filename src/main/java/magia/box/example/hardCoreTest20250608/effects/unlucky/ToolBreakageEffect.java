@@ -23,32 +23,46 @@ public class ToolBreakageEffect extends UnluckyEffectBase {
 
     @Override
     public String apply(Player player) {
-        int damagedCount = 0;
+        // ホットバーのツールを検索
+        java.util.List<Integer> toolSlots = new java.util.ArrayList<>();
         
-        for (int i = 0; i < player.getInventory().getSize(); i++) {
+        for (int i = 0; i < 9; i++) { // ホットバーのみ
             ItemStack item = player.getInventory().getItem(i);
-            if (item != null && item.getType().getMaxDurability() > 0) {
-                ItemMeta meta = item.getItemMeta();
-                if (meta instanceof Damageable) {
-                    Damageable damageable = (Damageable) meta;
-                    int currentDamage = damageable.getDamage();
-                    int maxDurability = item.getType().getMaxDurability();
-                    int additionalDamage = random.nextInt(maxDurability / 3) + 1;
-                    
-                    damageable.setDamage(Math.min(currentDamage + additionalDamage, maxDurability - 1));
-                    item.setItemMeta(meta);
-                    damagedCount++;
-                }
+            if (item != null && isTool(item.getType()) && item.getType().getMaxDurability() > 0) {
+                toolSlots.add(i);
             }
         }
         
-        if (damagedCount > 0) {
-            player.sendMessage(ChatColor.RED + "道具が破損しました！" + damagedCount + "個のアイテムの耐久値が減少しました。");
+        if (toolSlots.isEmpty()) {
+            player.sendMessage(ChatColor.YELLOW + "道具破損が発動しましたが、ホットバーにツールがありませんでした。");
+            return getDescription();
+        }
+        
+        // ランダムで1つのツールを選択
+        int selectedSlot = toolSlots.get(random.nextInt(toolSlots.size()));
+        ItemStack item = player.getInventory().getItem(selectedSlot);
+        
+        ItemMeta meta = item.getItemMeta();
+        if (meta instanceof Damageable) {
+            Damageable damageable = (Damageable) meta;
+            int maxDurability = item.getType().getMaxDurability();
+            
+            // 耐久値を30以下に設定（残り耐久30以下）
+            int targetDamage = Math.max(maxDurability - 30, 0);
+            damageable.setDamage(targetDamage);
+            item.setItemMeta(meta);
+            
+            player.sendMessage(ChatColor.RED + "道具破損！" + item.getType().name() + "の耐久値が大幅に減少しました！");
             player.playSound(player.getLocation(), Sound.ENTITY_ITEM_BREAK, 1.0f, 0.8f);
-        } else {
-            player.sendMessage(ChatColor.YELLOW + "破損する道具がありませんでした。");
         }
         
         return getDescription();
+    }
+    
+    private boolean isTool(Material material) {
+        String name = material.toString();
+        return name.contains("PICKAXE") || name.contains("AXE") || name.contains("SHOVEL") || 
+               name.contains("HOE") || name.contains("SWORD") || name.contains("BOW") ||
+               name.contains("SHEARS") || name.contains("FLINT_AND_STEEL") || name.contains("FISHING_ROD");
     }
 }

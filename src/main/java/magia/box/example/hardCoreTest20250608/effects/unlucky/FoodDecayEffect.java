@@ -13,6 +13,7 @@ import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
@@ -32,15 +33,45 @@ public class FoodDecayEffect extends UnluckyEffectBase {
 
     @Override
     public String apply(Player player) {
-        // フェーズ1: 食料スタック数を50%削減
-        int reducedCount = reduceFoodStacks(player);
+        // インベントリのランダム3スロット分の食料をそれぞれ残り3つにし、消したアイテムの合計数のゾンビ肉を足元へドロップ
+        List<Integer> foodSlots = new ArrayList<>();
         
-        if (reducedCount > 0) {
-            player.sendMessage(ChatColor.YELLOW + "⚠ 食料が傷み始めています..." + reducedCount + "種類の食料が減少しました。");
-            player.sendMessage(ChatColor.GOLD + "💡 30秒後に残りの食料が腐敗します！今のうちに消費してください！");
-            player.playSound(player.getLocation(), Sound.BLOCK_COMPOSTER_FILL, 1.0f, 0.8f);
+        // 食料アイテムのスロットを収集
+        for (int i = 0; i < player.getInventory().getSize(); i++) {
+            ItemStack item = player.getInventory().getItem(i);
+            if (item != null && item.getType().isEdible() && item.getType() != Material.ROTTEN_FLESH) {
+                foodSlots.add(i);
+            }
+        }
+        
+        if (foodSlots.isEmpty()) {
+            player.sendMessage(ChatColor.YELLOW + "腐る食料がありませんでした。");
+            return getDescription();
+        }
+        
+        // ランダム3スロット選択
+        Collections.shuffle(foodSlots);
+        int slotsToProcess = Math.min(3, foodSlots.size());
+        int totalRemovedItems = 0;
+        
+        for (int i = 0; i < slotsToProcess; i++) {
+            int slotIndex = foodSlots.get(i);
+            ItemStack item = player.getInventory().getItem(slotIndex);
+            if (item != null && item.getAmount() > 3) {
+                int removedAmount = item.getAmount() - 3;
+                totalRemovedItems += removedAmount;
+                item.setAmount(3);
+            }
+        }
+        
+        // 消したアイテムの合計数のゾンビ肉を足元へドロップ
+        if (totalRemovedItems > 0) {
+            ItemStack rottenFlesh = new ItemStack(Material.ROTTEN_FLESH, totalRemovedItems);
+            player.getWorld().dropItemNaturally(player.getLocation(), rottenFlesh);
             
-            // フェーズ2: 30秒後に残り食料を腐肉化
+            player.sendMessage(ChatColor.YELLOW + "食料が腐敗し始めました！" + totalRemovedItems + "個のゾンビ肉が足元に落ちました。");
+            
+            // 残り全ても残っていれば5秒後にゾンビ肉へ変化
             new BukkitRunnable() {
                 @Override
                 public void run() {
@@ -48,12 +79,9 @@ public class FoodDecayEffect extends UnluckyEffectBase {
                         rotRemainingFood(player);
                     }
                 }
-            }.runTaskLater(plugin, 30 * 20L); // 30秒後
-            
+            }.runTaskLater(plugin, 5 * 20L); // 5秒後
         } else {
-            // 食料がない場合の代替効果（安全措置）
-            player.sendMessage(ChatColor.YELLOW + "腐る食料がありませんでした。軽微な空腹効果を受けます。");
-            player.addPotionEffect(new PotionEffect(PotionEffectType.HUNGER, 200, 0)); // レベル0、10秒間
+            player.sendMessage(ChatColor.YELLOW + "食料の量が少ないため、腐敗効果は軽微でした。");
         }
         
         return getDescription();

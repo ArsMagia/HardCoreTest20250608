@@ -23,7 +23,7 @@ public class SpaceTimeDistortionEffect extends UnluckyEffectBase {
 
     @Override
     public String apply(Player player) {
-        player.sendMessage(ChatColor.DARK_PURPLE + "時空の歪みに巻き込まれました！30秒間ランダムテレポートします。");
+        player.sendMessage(ChatColor.DARK_PURPLE + "時空の歪みに巻き込まれました！15秒間ランダムテレポートします。");
         player.playSound(player.getLocation(), Sound.BLOCK_PORTAL_AMBIENT, 1.0f, 0.5f);
         
         new BukkitRunnable() {
@@ -51,7 +51,7 @@ public class SpaceTimeDistortionEffect extends UnluckyEffectBase {
                 
                 counter++;
             }
-        }.runTaskTimer(plugin, 0L, 60L);
+        }.runTaskTimer(plugin, 0L, 30L);
         
         return getDescription();
     }

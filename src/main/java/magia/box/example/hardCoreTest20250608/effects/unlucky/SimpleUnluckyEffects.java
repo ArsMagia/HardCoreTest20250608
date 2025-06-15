@@ -7,6 +7,8 @@ import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.Damageable;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
@@ -70,33 +72,30 @@ public class SimpleUnluckyEffects {
     
     // エフェクト4: 炎の雨
     public static class FireRainEffect extends UnluckyEffectBase {
+        private final Random random = new Random();
+        
         public FireRainEffect(JavaPlugin plugin) {
             super(plugin, "炎の雨", EffectRarity.UNCOMMON);
         }
         
         @Override
         public String apply(Player player) {
-            org.bukkit.Location center = player.getLocation();
-            new BukkitRunnable() {
-                int counter = 0;
+            org.bukkit.Location playerLoc = player.getLocation();
+            
+            // 2,3個のファイアチャージを頭上のどこか近くから降らせる
+            int fireChargeCount = 2 + random.nextInt(2); // 2-3個
+            
+            for (int i = 0; i < fireChargeCount; i++) {
+                org.bukkit.Location spawnLoc = playerLoc.clone().add(
+                    (random.nextDouble() - 0.5) * 10, // 頭上のどこか近く
+                    15,
+                    (random.nextDouble() - 0.5) * 10
+                );
                 
-                @Override
-                public void run() {
-                    if (counter >= 10 || !player.isOnline()) {
-                        this.cancel();
-                        return;
-                    }
-                    
-                    for (int i = 0; i < 3; i++) {
-                        org.bukkit.Location fireLoc = center.clone().add(
-                            Math.random() * 8 - 4, 0, Math.random() * 8 - 4);
-                        if (fireLoc.getBlock().getType() == Material.AIR) {
-                            fireLoc.getBlock().setType(Material.FIRE);
-                        }
-                    }
-                    counter++;
-                }
-            }.runTaskTimer(plugin, 0L, 20L);
+                // ファイアチャージを生成
+                org.bukkit.entity.Fireball fireball = playerLoc.getWorld().spawn(spawnLoc, org.bukkit.entity.SmallFireball.class);
+                fireball.setDirection(new org.bukkit.util.Vector(0, -1, 0));
+            }
             
             player.sendMessage(ChatColor.RED + "炎の雨が降り注ぎます！");
             return getDescription();
@@ -118,35 +117,6 @@ public class SimpleUnluckyEffects {
         }
     }
     
-    // エフェクト6: 逆操作効果
-    public static class ReverseControlsEffect extends UnluckyEffectBase {
-        public ReverseControlsEffect(JavaPlugin plugin) {
-            super(plugin, "逆操作効果", EffectRarity.RARE);
-        }
-        
-        @Override
-        public String apply(Player player) {
-            player.addPotionEffect(new PotionEffect(PotionEffectType.NAUSEA, 300, 1));
-            player.sendMessage(ChatColor.LIGHT_PURPLE + "操作が逆になりました...混乱します！");
-            return getDescription();
-        }
-    }
-    
-    // エフェクト7: 偽死効果
-    public static class FakeDeathEffect extends UnluckyEffectBase {
-        public FakeDeathEffect(JavaPlugin plugin) {
-            super(plugin, "偽死効果", EffectRarity.UNCOMMON);
-        }
-        
-        @Override
-        public String apply(Player player) {
-            player.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 100, 0));
-            player.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 100, 4));
-            player.sendMessage(ChatColor.BLACK + "死んだふりをしてしまいました...");
-            return getDescription();
-        }
-    }
-    
     // エフェクト8: 武器呪い
     public static class WeaponCurseEffect extends UnluckyEffectBase {
         public WeaponCurseEffect(JavaPlugin plugin) {
@@ -155,22 +125,29 @@ public class SimpleUnluckyEffects {
         
         @Override
         public String apply(Player player) {
-            // 武器系アイテムを一時的に削除
-            for (int i = 0; i < 9; i++) {
+            // すべての武器、ツールの耐久力を10にする
+            for (int i = 0; i < player.getInventory().getSize(); i++) {
                 ItemStack item = player.getInventory().getItem(i);
-                if (item != null && isWeapon(item.getType())) {
-                    player.getInventory().setItem(i, null);
+                if (item != null && isWeaponOrTool(item.getType()) && item.getType().getMaxDurability() > 0) {
+                    ItemMeta meta = item.getItemMeta();
+                    if (meta instanceof Damageable) {
+                        Damageable damageable = (Damageable) meta;
+                        int maxDurability = item.getType().getMaxDurability();
+                        damageable.setDamage(maxDurability - 10);
+                        item.setItemMeta(meta);
+                    }
                 }
             }
-            player.sendMessage(ChatColor.RED + "武器に呪いがかかり、消失しました！");
+            player.sendMessage(ChatColor.RED + "武器に呪いがかかり、耐久力が10になりました！");
             return getDescription();
         }
         
-        private boolean isWeapon(Material material) {
-            return material.toString().contains("SWORD") || 
-                   material.toString().contains("AXE") ||
-                   material.toString().contains("BOW") ||
-                   material.toString().contains("TRIDENT");
+        private boolean isWeaponOrTool(Material material) {
+            String name = material.toString();
+            return name.contains("SWORD") || name.contains("AXE") || name.contains("BOW") ||
+                   name.contains("TRIDENT") || name.contains("PICKAXE") || name.contains("SHOVEL") ||
+                   name.contains("HOE") || name.contains("SHEARS") || name.contains("FLINT_AND_STEEL") ||
+                   name.contains("FISHING_ROD");
         }
     }
     
@@ -182,11 +159,43 @@ public class SimpleUnluckyEffects {
         
         @Override
         public String apply(Player player) {
-            player.getInventory().setHelmet(null);
-            player.getInventory().setChestplate(null);
-            player.getInventory().setLeggings(null);
-            player.getInventory().setBoots(null);
-            player.sendMessage(ChatColor.YELLOW + "防具が消失しました！");
+            // 装備している防具スロットを確認
+            java.util.List<String> armorSlots = new java.util.ArrayList<>();
+            
+            if (player.getInventory().getHelmet() != null) armorSlots.add("helmet");
+            if (player.getInventory().getChestplate() != null) armorSlots.add("chestplate");
+            if (player.getInventory().getLeggings() != null) armorSlots.add("leggings");
+            if (player.getInventory().getBoots() != null) armorSlots.add("boots");
+            
+            if (armorSlots.isEmpty()) {
+                player.sendMessage(ChatColor.YELLOW + "防具消失が発動しましたが、装備している防具がありませんでした。");
+                return getDescription();
+            }
+            
+            // ランダムで1つの防具スロットを選択して削除
+            String selectedSlot = armorSlots.get(new Random().nextInt(armorSlots.size()));
+            String removedArmorName = "";
+            
+            switch (selectedSlot) {
+                case "helmet":
+                    removedArmorName = player.getInventory().getHelmet().getType().name();
+                    player.getInventory().setHelmet(null);
+                    break;
+                case "chestplate":
+                    removedArmorName = player.getInventory().getChestplate().getType().name();
+                    player.getInventory().setChestplate(null);
+                    break;
+                case "leggings":
+                    removedArmorName = player.getInventory().getLeggings().getType().name();
+                    player.getInventory().setLeggings(null);
+                    break;
+                case "boots":
+                    removedArmorName = player.getInventory().getBoots().getType().name();
+                    player.getInventory().setBoots(null);
+                    break;
+            }
+            
+            player.sendMessage(ChatColor.YELLOW + "防具消失！" + removedArmorName + "が消失しました！");
             return getDescription();
         }
     }
@@ -199,8 +208,24 @@ public class SimpleUnluckyEffects {
         
         @Override
         public String apply(Player player) {
-            player.addPotionEffect(new PotionEffect(PotionEffectType.NAUSEA, 300, 1));
             player.sendMessage(ChatColor.DARK_PURPLE + "記憶が一部失われました...混乱しています。");
+            
+            // 空のチャットメッセージを20回送信
+            new BukkitRunnable() {
+                int count = 0;
+                
+                @Override
+                public void run() {
+                    if (count >= 20 || !player.isOnline()) {
+                        this.cancel();
+                        return;
+                    }
+                    
+                    player.sendMessage(" "); // 空のメッセージ
+                    count++;
+                }
+            }.runTaskTimer(plugin, 5L, 5L); // 0.25秒間隔で送信
+            
             return getDescription();
         }
     }

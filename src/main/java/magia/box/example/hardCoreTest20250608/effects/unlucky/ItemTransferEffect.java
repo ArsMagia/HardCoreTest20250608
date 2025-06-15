@@ -47,9 +47,9 @@ public class ItemTransferEffect extends UnluckyEffectBase {
             return;
         }
         
-        // 最大5つのアイテムをランダムに選択
+        // 最大3つのアイテムをランダムに選択
         Collections.shuffle(transferableItems);
-        int transferCount = Math.min(5, transferableItems.size());
+        int transferCount = Math.min(3, transferableItems.size());
         List<ItemStack> itemsToTransfer = transferableItems.subList(0, transferCount);
         
         Map<Player, List<ItemStack>> transferMap = new HashMap<>();
@@ -90,8 +90,8 @@ public class ItemTransferEffect extends UnluckyEffectBase {
         List<ItemStack> transferableItems = new ArrayList<>();
         ItemStack[] contents = player.getInventory().getContents();
         
-        // ホットバーの一番左（インデックス0）は対象外
-        for (int i = 1; i < contents.length; i++) {
+        // ホットバーの左3つ（インデックス0,1,2）は対象外
+        for (int i = 3; i < contents.length; i++) {
             ItemStack item = contents[i];
             if (item != null && item.getType() != Material.AIR) {
                 transferableItems.add(item);
@@ -105,7 +105,7 @@ public class ItemTransferEffect extends UnluckyEffectBase {
         for (ItemStack itemToRemove : itemsToRemove) {
             // アイテムをインベントリから削除
             ItemStack[] contents = player.getInventory().getContents();
-            for (int i = 1; i < contents.length; i++) { // インデックス0をスキップ
+            for (int i = 3; i < contents.length; i++) { // インデックス0,1,2をスキップ
                 ItemStack item = contents[i];
                 if (item != null && item.isSimilar(itemToRemove)) {
                     if (item.getAmount() >= itemToRemove.getAmount()) {

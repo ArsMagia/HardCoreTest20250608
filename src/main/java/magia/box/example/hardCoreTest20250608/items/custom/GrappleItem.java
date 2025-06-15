@@ -13,14 +13,9 @@ import org.bukkit.event.player.PlayerFishEvent;
 import org.bukkit.event.player.PlayerItemDamageEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 
 public class GrappleItem extends
@@ -28,16 +23,13 @@ public class GrappleItem extends
 
     private final ArrayList<UUID> grappling = new ArrayList<>();
     private static final int POWER = 5;
-    private static final Map<UUID, Long> grappleUsage = new HashMap<>();
-    private static final Set<EntityDamageEvent> processedDamageEvents = new HashSet<>();
 
     public GrappleItem(JavaPlugin plugin) {
-        super(plugin, builder("grapple", "グラップルの使い手")
+        super(plugin, builder("grapple", "Grapple")
                 .material(Material.FISHING_ROD)
                 .rarity(ItemRarity.UNCOMMON)
                 .addLore("釣り竿でグラップリング！")
                 .addLore("地面や壁に向かって使用")
-                .addLore("使用後8秒間は落下ダメージ半減")
                 .addLore("無制限使用可能")
                 .addHint("パワー: " + POWER));
     }
@@ -53,40 +45,30 @@ public class GrappleItem extends
         }
 
         Vector grapple = event.getHook().getLocation().subtract(player.getLocation()).toVector().normalize().multiply(POWER);
-        // Y軸の勢いを1/2に減少（極端な飛び方を抑制）
-        grapple.setY(grapple.getY() * 0.5);
+        // Y軸の勢いを1/3に減少（極端な高い飛び方を抑制）
+        grapple.setY(grapple.getY() * 0.333);
         Entity hookedEntity = event.getHook().getHookedEntity();
 
         if (event.getState() == PlayerFishEvent.State.FISHING) {
             if (event.getHand() == null) return;
             grappling.add(uuid);
         } else if (grappling.contains(uuid)) {
-            boolean grappleSuccess = false;
             boolean shouldShowFailMessage = false;
             
             switch (event.getState()) {
                 case REEL_IN:
                     if (canGrapple(event.getHook().getLocation(), player)) {
                         player.setVelocity(player.getVelocity().add(grapple));
-                        grappleSuccess = true;
-                        // グラップル使用時間を記録
-                        grappleUsage.put(uuid, System.currentTimeMillis());
                     } else {
                         shouldShowFailMessage = true; // REEL_INで失敗した場合のみメッセージ表示
                     }
                     break;
                 case IN_GROUND:
                     player.setVelocity(player.getVelocity().add(grapple));
-                    grappleSuccess = true;
-                    // グラップル使用時間を記録
-                    grappleUsage.put(uuid, System.currentTimeMillis());
                     break;
                 case CAUGHT_ENTITY:
                     if (hookedEntity != null && hookedEntity.getType() == EntityType.PLAYER) {
                         player.setVelocity(player.getVelocity().add(grapple));
-                        grappleSuccess = true;
-                        // グラップル使用時間を記録
-                        grappleUsage.put(uuid, System.currentTimeMillis());
                     }
                     break;
                 default:
@@ -163,44 +145,4 @@ public class GrappleItem extends
         }
     }
     
-    @EventHandler
-    public void onFallDamage(EntityDamageEvent event) {
-        if (!(event.getEntity() instanceof Player)) return;
-        if (event.getCause() != EntityDamageEvent.DamageCause.FALL) return;
-        
-        Player player = (Player) event.getEntity();
-        UUID uuid = player.getUniqueId();
-        
-        // 既に処理済みのイベントかチェック（重複防止）
-        if (processedDamageEvents.contains(event)) {
-            return;
-        }
-        
-        // グラップル使用から8秒以内かチェック
-        if (grappleUsage.containsKey(uuid)) {
-            long lastUsage = grappleUsage.get(uuid);
-            long currentTime = System.currentTimeMillis();
-            
-            if (currentTime - lastUsage <= 8000) { // 8秒 = 8000ms
-                // イベントを処理済みとしてマーク
-                processedDamageEvents.add(event);
-                
-                // 落下ダメージを半減
-                event.setDamage(event.getDamage() * 0.5);
-                player.sendMessage(ChatColor.GREEN + "グラップルの使い手効果: 落下ダメージが半減されました！");
-                
-                // メモリリークを防ぐためタスクでイベントを削除
-                new BukkitRunnable() {
-                    @Override
-                    public void run() {
-                        processedDamageEvents.remove(event);
-                    }
-                }.runTaskLater(plugin, 1L);
-                
-            } else {
-                // 時間経過で記録を削除
-                grappleUsage.remove(uuid);
-            }
-        }
-    }
 }

@@ -33,6 +33,7 @@ public class ItemRegistry {
         items.put("enhanced_pickaxe", new EnhancedPickaxeItem(plugin));
         items.put("player_tracking_compass", new PlayerTrackingCompassItem(plugin));
         items.put("special_multi_tool", new SpecialMultiToolItem(plugin));
+        items.put("heal_kit", new HealKitItem(plugin));
     }
     
     /**
@@ -95,5 +96,9 @@ public class ItemRegistry {
     
     public SpecialMultiToolItem getSpecialMultiToolItem() {
         return getItem("special_multi_tool", SpecialMultiToolItem.class);
+    }
+    
+    public HealKitItem getHealKitItem() {
+        return getItem("heal_kit", HealKitItem.class);
     }
 }

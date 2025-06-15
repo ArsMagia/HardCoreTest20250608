@@ -13,16 +13,17 @@ import java.util.*;
 
 /**
  * ウイルス型連鎖感染システム
- * フェーズ1: 初回感染（8ブロック範囲）
+ * フェーズ1: 初回感染（20ブロック範囲）
  * フェーズ2: 感染者が新たな感染源となる（連鎖反応）
  * フェーズ3: 感染レベルに応じて効果強化
- * 治療: 牛乳バケツまたは治癒ポーションで回復可能
+ * 注意: 治癒不可能な恐ろしい呪い
  */
 public class CurseInfectionEffect extends UnluckyEffectBase {
 
     // 感染状態管理
     private final Map<UUID, Integer> infectionLevels = new HashMap<>();
     private final Set<UUID> quarantined = new HashSet<>();
+    private UUID patient0Id; // 発動者のUUID
     
     public CurseInfectionEffect(JavaPlugin plugin) {
         super(plugin, "呪いの伝染", EffectRarity.EPIC);
@@ -35,7 +36,7 @@ public class CurseInfectionEffect extends UnluckyEffectBase {
         
         patient0.sendMessage(ChatColor.DARK_RED + "⚠ 呪いのウイルスが発動しました！");
         patient0.sendMessage(ChatColor.YELLOW + "🦠 連鎖感染システムが始動します...");
-        patient0.sendMessage(ChatColor.GOLD + "🥛 治療法: 牛乳バケツまたは治癒ポーションで回復可能！");
+        patient0.sendMessage(ChatColor.DARK_PURPLE + "💀 この呪いは治癒不可能です...");
         
         // 初期エフェクト
         patient0.playSound(patient0.getLocation(), Sound.ENTITY_ZOMBIE_VILLAGER_CONVERTED, 1.0f, 0.5f);
@@ -47,7 +48,11 @@ public class CurseInfectionEffect extends UnluckyEffectBase {
         );
         
         // 患者零号をレベル1で感染登録
-        infectionLevels.put(patient0.getUniqueId(), 1);
+        patient0Id = patient0.getUniqueId(); // 発動者のUUIDを保存
+        infectionLevels.put(patient0Id, 1);
+        
+        // 発動者に毒I を1秒
+        patient0.addPotionEffect(new PotionEffect(PotionEffectType.POISON, 20, 0)); // 20tick = 1秒, 毒I
         
         // 初回感染を実行
         performInitialInfection(patient0);
@@ -67,7 +72,7 @@ public class CurseInfectionEffect extends UnluckyEffectBase {
         
         for (Player player : Bukkit.getOnlinePlayers()) {
             if (!player.equals(patient0) && 
-                player.getLocation().distance(center) <= 8 &&
+                player.getLocation().distance(center) <= 20 &&
                 !infectionLevels.containsKey(player.getUniqueId())) {
                 
                 // レベル1で感染
@@ -101,7 +106,7 @@ public class CurseInfectionEffect extends UnluckyEffectBase {
             
             @Override
             public void run() {
-                if (wave > maxWaves || infectionLevels.isEmpty()) {
+                if (wave > maxWaves) {
                     finishInfection();
                     this.cancel();
                     return;
@@ -116,9 +121,6 @@ public class CurseInfectionEffect extends UnluckyEffectBase {
                 wave++;
             }
         }.runTaskTimer(plugin, 60L, 60L); // 3秒間隔
-        
-        // 治癒モニタリングタスク
-        startHealingMonitor();
     }
     
     /**
@@ -140,7 +142,7 @@ public class CurseInfectionEffect extends UnluckyEffectBase {
         for (Player infectedPlayer : currentInfected) {
             Location center = infectedPlayer.getLocation();
             int infectionLevel = infectionLevels.get(infectedPlayer.getUniqueId());
-            int range = Math.min(6 + infectionLevel, 10); // レベルに応じて範囲拡大
+            int range = Math.min(15 + infectionLevel, 25); // レベルに応じて範囲拡大（2.5倍）
             
             for (Player player : Bukkit.getOnlinePlayers()) {
                 if (!infectionLevels.containsKey(player.getUniqueId()) &&
@@ -180,8 +182,25 @@ public class CurseInfectionEffect extends UnluckyEffectBase {
             player.addPotionEffect(new PotionEffect(PotionEffectType.NAUSEA, duration, 0));
         }
         
+        // レベル5でウィザー効果追加
+        if (level >= 5) {
+            player.addPotionEffect(new PotionEffect(PotionEffectType.WITHER, 60, 0)); // 3秒間ウィザーI
+            player.sendMessage(ChatColor.DARK_RED + "💀 最高レベルの感染により、ウィザー効果が発動しました！");
+        }
+        
+        // 感染レベル上昇時のダメージ（0.5ハート）
+        player.damage(1.0); // 1.0ダメージ = 0.5ハート
+        
+        // 頭上エフェクト
+        player.getWorld().spawnParticle(
+            Particle.DUST,
+            player.getLocation().add(0, 2.5, 0),
+            5, 0.3, 0.3, 0.3, 0.1,
+            new Particle.DustOptions(Color.fromRGB(75, 0, 130), 1.0f) // 暗い紫色
+        );
+        
         player.sendMessage(ChatColor.DARK_PURPLE + "🦠 呪いに感染しました！レベル" + level);
-        player.sendMessage(ChatColor.GOLD + "🥛 治療法: 牛乳バケツを使用してください！");
+        player.sendMessage(ChatColor.DARK_RED + "💀 この呪いからは逃れられません...");
         
         // 感染エフェクト
         player.playSound(player.getLocation(), Sound.ENTITY_ZOMBIE_AMBIENT, 0.8f, 1.5f);
@@ -214,58 +233,6 @@ public class CurseInfectionEffect extends UnluckyEffectBase {
         }
     }
     
-    /**
-     * 治癒モニタリングタスク
-     */
-    private void startHealingMonitor() {
-        new BukkitRunnable() {
-            @Override
-            public void run() {
-                if (infectionLevels.isEmpty()) {
-                    this.cancel();
-                    return;
-                }
-                
-                List<UUID> healedPlayers = new ArrayList<>();
-                
-                for (UUID playerId : infectionLevels.keySet()) {
-                    Player player = Bukkit.getPlayer(playerId);
-                    if (player != null && player.isOnline()) {
-                        // ポーション効果が消えているかチェック（治癒アイテム使用）
-                        if (!player.hasPotionEffect(PotionEffectType.WEAKNESS) &&
-                            !player.hasPotionEffect(PotionEffectType.SLOWNESS)) {
-                            healedPlayers.add(playerId);
-                            healPlayer(player);
-                        }
-                    } else {
-                        healedPlayers.add(playerId); // オフラインプレイヤーをクリーンアップ
-                    }
-                }
-                
-                // 治癒されたプレイヤーを削除
-                for (UUID playerId : healedPlayers) {
-                    infectionLevels.remove(playerId);
-                }
-            }
-        }.runTaskTimer(plugin, 20L, 20L); // 1秒間隔でチェック
-    }
-    
-    /**
-     * プレイヤーを治癒
-     */
-    private void healPlayer(Player player) {
-        player.sendMessage(ChatColor.GREEN + "✨ 呪いが浄化されました！治癒完了です。");
-        player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.5f);
-        
-        // 治癒エフェクト
-        player.getWorld().spawnParticle(
-            Particle.HEART,
-            player.getLocation().add(0, 2, 0),
-            10, 1, 1, 1, 0.1
-        );
-        
-        Bukkit.broadcastMessage(ChatColor.GREEN + "✨ " + player.getName() + "が呪いから治癒されました！");
-    }
     
     /**
      * 感染終了処理
@@ -275,21 +242,21 @@ public class CurseInfectionEffect extends UnluckyEffectBase {
             Bukkit.broadcastMessage("");
             Bukkit.broadcastMessage(ChatColor.YELLOW + "😷 呪いのウイルスが自然治癒し始めました...");
             
-            // 残っている感染者を強制治癒
+            // 残っている感染者の効果を除去
             for (UUID playerId : infectionLevels.keySet()) {
                 Player player = Bukkit.getPlayer(playerId);
                 if (player != null && player.isOnline()) {
                     player.removePotionEffect(PotionEffectType.WEAKNESS);
                     player.removePotionEffect(PotionEffectType.SLOWNESS);
                     player.removePotionEffect(PotionEffectType.NAUSEA);
-                    healPlayer(player);
+                    player.sendMessage(ChatColor.YELLOW + "💀 呪いのウイルスが自然消滅しました...");
                 }
             }
             
             infectionLevels.clear();
         }
         
-        Bukkit.broadcastMessage(ChatColor.GREEN + "✅ 呪いの感染が完全に終息しました。");
+        Bukkit.broadcastMessage(ChatColor.YELLOW + "💀 呪いの感染が自然終息しました。");
         quarantined.clear();
     }
 }

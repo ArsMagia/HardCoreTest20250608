@@ -16,7 +16,14 @@
       "Bash(grep:*)",
       "Bash(ls:*)",
       "Bash(rm:*)",
-      "Bash(javac:*)"
+      "Bash(javac:*)",
+      "Bash(chmod:*)",
+      "Bash(/usr/bin/mvn clean compile)",
+      "Bash(apt list:*)",
+      "Bash(sudo apt:*)",
+      "Bash(sudo apt install:*)",
+      "Bash(java:*)",
+      "mcp__ide__getDiagnostics"
     ],
     "deny": []
   }

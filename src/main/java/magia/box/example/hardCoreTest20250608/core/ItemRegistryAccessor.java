@@ -57,4 +57,8 @@ public final class ItemRegistryAccessor {
     public static SpecialMultiToolItem getSpecialMultiToolItem() {
         return getRegistry().getSpecialMultiToolItem();
     }
+    
+    public static HealKitItem getHealKitItem() {
+        return getRegistry().getHealKitItem();
+    }
 }

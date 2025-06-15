@@ -19,7 +19,7 @@ public class FallingBlocksEffect extends UnluckyEffectBase {
     private final Random random = new Random();
 
     public FallingBlocksEffect(JavaPlugin plugin) {
-        super(plugin, "重力ブロック", EffectRarity.RARE);
+        super(plugin, "重力ブロック", EffectRarity.UNCOMMON);
     }
 
     @Override
@@ -32,20 +32,17 @@ public class FallingBlocksEffect extends UnluckyEffectBase {
         new BukkitRunnable() {
             int counter = 0;
             int totalBlocksSpawned = 0;
-            final int maxBlocks = 20; // 最大ブロック数制限
+            final int maxBlocks = 30; // 最大ブロック数制限（1.5倍）
             
             @Override
             public void run() {
                 if (counter >= 10 || !player.isOnline() || totalBlocksSpawned >= maxBlocks) {
-                    if (player.isOnline() && totalBlocksSpawned >= maxBlocks) {
-                        player.sendMessage(ChatColor.YELLOW + "（パフォーマンス保護により制限に達しました）");
-                    }
                     this.cancel();
                     return;
                 }
                 
-                // ランダムな位置から落下ブロックを生成（数を削減）
-                int blocksThisRound = Math.min(2, maxBlocks - totalBlocksSpawned); // 最大2個まで
+                // ランダムな位置から落下ブロックを生成（1.5倍）
+                int blocksThisRound = Math.min(3, maxBlocks - totalBlocksSpawned); // 最大3個まで（1.5倍）
                 for (int i = 0; i < blocksThisRound; i++) {
                     int x = center.getBlockX() + random.nextInt(8) - 4; // 範囲も削減
                     int z = center.getBlockZ() + random.nextInt(8) - 4;
@@ -64,7 +61,7 @@ public class FallingBlocksEffect extends UnluckyEffectBase {
                 
                 counter++;
             }
-        }.runTaskTimer(plugin, 0L, 20L);
+        }.runTaskTimer(plugin, 0L, 14L); // 頻度1.5倍（20L → 14L）
         
         return getDescription();
     }

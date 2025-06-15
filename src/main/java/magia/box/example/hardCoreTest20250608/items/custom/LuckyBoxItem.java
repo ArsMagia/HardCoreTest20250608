@@ -4,6 +4,9 @@ import magia.box.example.hardCoreTest20250608.items.core.AbstractCustomItemV2;
 import magia.box.example.hardCoreTest20250608.items.core.ItemRarity;
 import magia.box.example.hardCoreTest20250608.effects.*;
 import magia.box.example.hardCoreTest20250608.effects.lucky.*;
+import magia.box.example.hardCoreTest20250608.effects.lucky.legendary.AdrenalineRushEffect;
+import magia.box.example.hardCoreTest20250608.effects.lucky.common.SpeedLuckyEffect;
+import magia.box.example.hardCoreTest20250608.effects.unlucky.individual.*;
 import magia.box.example.hardCoreTest20250608.effects.FutureGuaranteeManager;
 import magia.box.example.hardCoreTest20250608.effects.unlucky.*;
 import static magia.box.example.hardCoreTest20250608.effects.unlucky.SimpleUnluckyEffects.*;
@@ -83,6 +86,7 @@ public class LuckyBoxItem extends AbstractCustomItemV2 {
         effectRegistry.registerEffect("enhanced_pickaxe_reward", new EnhancedPickaxeRewardEffect(plugin));
         effectRegistry.registerEffect("player_tracking_compass_reward", new PlayerTrackingCompassRewardEffect(plugin));
         effectRegistry.registerEffect("special_multi_tool_reward", new SpecialMultiToolRewardEffect(plugin));
+        effectRegistry.registerEffect("heal_kit_reward", new HealKitRewardEffect(plugin));
         effectRegistry.registerEffect("luckybox_distribution", new LuckyBoxDistributionEffect(plugin));
         
         // 追加ラッキー効果
@@ -101,6 +105,7 @@ public class LuckyBoxItem extends AbstractCustomItemV2 {
         
         // 体力増減系ラッキー効果
         effectRegistry.registerEffect("health_boost", new HealthBoostEffect(plugin));
+        effectRegistry.registerEffect("life_breath", new LifeBreathEffect(plugin));
         
         // 特殊移動系ラッキー効果
         effectRegistry.registerEffect("malphite_ult", new MalphiteUltEffect(plugin));
@@ -113,6 +118,7 @@ public class LuckyBoxItem extends AbstractCustomItemV2 {
         effectRegistry.registerEffect("speed", new SpeedLuckyEffect(plugin));
         effectRegistry.registerEffect("temporary_flight", new TemporaryFlightEffect(plugin));
         effectRegistry.registerEffect("dimension_pocket", new DimensionPocketEffect(plugin));
+        effectRegistry.registerEffect("weak_recovery", new WeakRecoveryEffect(plugin));
         
         // 新しいLEGENDARY効果
         effectRegistry.registerEffect("stable_future", new StableFutureEffect(plugin));
@@ -120,12 +126,10 @@ public class LuckyBoxItem extends AbstractCustomItemV2 {
         effectRegistry.registerEffect("time_leap", new TimeLeapEffect(plugin));
         effectRegistry.registerEffect("adrenaline_rush", new AdrenalineRushEffect(plugin));
         effectRegistry.registerEffect("future_selection", new FutureSelectionEffect(plugin));
+        effectRegistry.registerEffect("building_god", new BuildingGodEffect(plugin));
         
         // 時空間系アンラッキー効果
         effectRegistry.registerEffect("spacetime_distortion", new SpaceTimeDistortionEffect(plugin));
-        
-        // 環境操作系アンラッキー効果
-        effectRegistry.registerEffect("cursed_fog", new CursedFogEffect(plugin));
         
         // 変身・妨害系アンラッキー効果
         effectRegistry.registerEffect("chicken_transform", new ChickenTransformEffect(plugin));
@@ -149,21 +153,17 @@ public class LuckyBoxItem extends AbstractCustomItemV2 {
         
         // 基本アンラッキー効果
         effectRegistry.registerEffect("gravity_flip", new GravityFlipEffect(plugin));
-        effectRegistry.registerEffect("cursed_sounds", new CursedSoundsEffect(plugin));
         effectRegistry.registerEffect("arrow_rain", new ArrowRainEffect(plugin));
         
         // 追加アンラッキー効果 (SimpleUnluckyEffects)
         effectRegistry.registerEffect("ground_liquefaction", new GroundLiquefactionEffect(plugin));
-        effectRegistry.registerEffect("giant_curse", new GiantCurseEffect(plugin));
         effectRegistry.registerEffect("food_decay", new FoodDecayEffect(plugin));
         effectRegistry.registerEffect("tool_breakage", new ToolBreakageEffect(plugin));
         effectRegistry.registerEffect("color_blindness", new ColorBlindnessEffect(plugin));
-        effectRegistry.registerEffect("shame_mark", new ShameMarkEffect(plugin));
         effectRegistry.registerEffect("curse_infection", new CurseInfectionEffect(plugin));
         effectRegistry.registerEffect("time_acceleration", new TimeAccelerationEffect(plugin));
         effectRegistry.registerEffect("dimension_rift", new DimensionRiftEffect(plugin));
         effectRegistry.registerEffect("falling_blocks", new FallingBlocksEffect(plugin));
-        effectRegistry.registerEffect("weather_storm", new WeatherStormEffect(plugin));
         
         // 新しいunlucky効果
         effectRegistry.registerEffect("curse_proxy", new CurseProxyEffect(plugin));
@@ -171,25 +171,26 @@ public class LuckyBoxItem extends AbstractCustomItemV2 {
         effectRegistry.registerEffect("worst_building", new WorstBuildingEffect(plugin));
         effectRegistry.registerEffect("item_transfer", new ItemTransferEffect(plugin));
         effectRegistry.registerEffect("follow_me", new FollowMeEffect(plugin));
+        effectRegistry.registerEffect("brought_calamity", new BroughtCalamityEffect(plugin));
+        effectRegistry.registerEffect("abyss_interference", new AbyssInterferenceEffect(plugin));
+        effectRegistry.registerEffect("all_for_one", new AllForOneEffect(plugin));
         
-        // SimpleUnluckyEffects のネストクラス
-        effectRegistry.registerEffect("reverse_controls", new ReverseControlsEffect(plugin));
-        effectRegistry.registerEffect("fake_death", new FakeDeathEffect(plugin));
-        effectRegistry.registerEffect("random_teleport", new RandomTeleportEffect(plugin));
-        effectRegistry.registerEffect("item_weight", new ItemWeightEffect(plugin));
-        effectRegistry.registerEffect("hunger_curse", new HungerCurseEffect(plugin));
+        // Individual unlucky effects (migrated from compound files)
+        effectRegistry.registerEffect("random_teleport", new magia.box.example.hardCoreTest20250608.effects.unlucky.individual.RandomTeleportEffect(plugin));
+        effectRegistry.registerEffect("item_weight", new magia.box.example.hardCoreTest20250608.effects.unlucky.individual.ItemWeightEffect(plugin));
+        
+        // SimpleUnluckyEffects のネストクラス (remaining)
         effectRegistry.registerEffect("memory_loss", new MemoryLossEffect(plugin));
         effectRegistry.registerEffect("fire_rain", new FireRainEffect(plugin));
         effectRegistry.registerEffect("exp_leak", new ExpLeakEffect(plugin));
         effectRegistry.registerEffect("weapon_curse", new WeaponCurseEffect(plugin));
         effectRegistry.registerEffect("armor_vanish", new ArmorVanishEffect(plugin));
         
-        // MoreUnluckyEffects のネストクラス
-        effectRegistry.registerEffect("drowning_feeling", new DrowningFeelingEffect(plugin));
+        // Individual unlucky effects (migrated from MoreUnluckyEffects)
+        effectRegistry.registerEffect("hand_tremor", new magia.box.example.hardCoreTest20250608.effects.unlucky.individual.HandTremorEffect(plugin));
+        
+        // MoreUnluckyEffects のネストクラス (remaining)
         effectRegistry.registerEffect("darkphobia", new DarkphobiaEffect(plugin));
-        effectRegistry.registerEffect("hand_tremor", new HandTremorEffect(plugin));
-        effectRegistry.registerEffect("leg_cramp", new LegCrampEffect(plugin));
-        effectRegistry.registerEffect("sleep_deprivation", new SleepDeprivationEffect(plugin));
         effectRegistry.registerEffect("confusion_mist", new ConfusionMistEffect(plugin));
         effectRegistry.registerEffect("electric_shock", new ElectricShockEffect(plugin));
         effectRegistry.registerEffect("frozen_state", new FrozenStateEffect(plugin));
@@ -198,36 +199,19 @@ public class LuckyBoxItem extends AbstractCustomItemV2 {
         effectRegistry.registerEffect("metal_allergy", new MetalAllergyEffect(plugin));
         effectRegistry.registerEffect("gravity_sickness", new GravitySicknessEffect(plugin));
         effectRegistry.registerEffect("hyperacusis", new HyperacusisEffect(plugin));
-        effectRegistry.registerEffect("number_amnesia", new NumberAmnesiaEffect(plugin));
-        effectRegistry.registerEffect("spell_failure", new SpellFailureEffect(plugin));
         
         // FinalUnluckyEffects のネストクラス
         effectRegistry.registerEffect("mirror_world", new MirrorWorldEffect(plugin));
-        effectRegistry.registerEffect("evaporation", new EvaporationEffect(plugin));
         effectRegistry.registerEffect("petrification", new PetrificationEffect(plugin));
-        effectRegistry.registerEffect("double_vision", new DoubleVisionEffect(plugin));
-        effectRegistry.registerEffect("clock_malfunction", new ClockMalfunctionEffect(plugin));
         effectRegistry.registerEffect("shadow_binding", new ShadowBindingEffect(plugin));
-        effectRegistry.registerEffect("oxygen_deprivation", new OxygenDeprivationEffect(plugin));
-        effectRegistry.registerEffect("radio_interference", new RadioInterferenceEffect(plugin));
         effectRegistry.registerEffect("magnetic_anomaly", new MagneticAnomalyEffect(plugin));
-        effectRegistry.registerEffect("phantom_pain", new PhantomPainEffect(plugin));
         effectRegistry.registerEffect("item_shuffle", new ItemShuffleEffect(plugin));
-        effectRegistry.registerEffect("sound_spam", new SoundSpamEffect(plugin));
-        effectRegistry.registerEffect("fake_damage", new FakeDamageEffect(plugin));
         
         // QuickDebuff バリエーション
-        effectRegistry.registerEffect("heavy_feet", createSlownessVariant(plugin));
         effectRegistry.registerEffect("power_drain", createWeaknessVariant(plugin));
-        effectRegistry.registerEffect("mining_fatigue_v2", createMiningFatigueVariant(plugin));
         effectRegistry.registerEffect("intense_hunger", createHungerVariant(plugin));
         effectRegistry.registerEffect("dizziness", createNauseaVariant(plugin));
-        effectRegistry.registerEffect("temporary_blindness", createBlindnessVariant(plugin));
-        effectRegistry.registerEffect("mild_poison", createPoisonVariant(plugin));
-        effectRegistry.registerEffect("withering", createWitherVariant(plugin));
         effectRegistry.registerEffect("light_levitation", createLevitationVariant(plugin));
-        effectRegistry.registerEffect("misfortune", createUnluckVariant(plugin));
-        effectRegistry.registerEffect("darkness_veil", createDarknessVariant(plugin));
         
     }
     
@@ -309,6 +293,26 @@ public class LuckyBoxItem extends AbstractCustomItemV2 {
         FutureGuaranteeManager.GuaranteeType guaranteeType = manager.getGuaranteeType(player);
         manager.consumeGuarantee(player);
         
+        // アンラッキー災厄保証の場合は特別処理
+        if (guaranteeType == FutureGuaranteeManager.GuaranteeType.UNLUCKY_CALAMITY) {
+            player.sendMessage(ChatColor.DARK_RED + "💀 災厄の保証が発動！ " + UNLUCKY_MESSAGE);
+            player.playSound(player.getLocation(), Sound.ENTITY_WITHER_AMBIENT, 1.0f, 0.8f);
+            player.getWorld().spawnParticle(
+                    Particle.SMOKE,
+                    player.getLocation().add(0, 1, 0),
+                    20, 0.5, 0.5, 0.5, 0.1
+            );
+            
+            // 強制的にアンラッキー効果を実行
+            LuckyEffect unluckyEffect = effectRegistry.getRandomUnlucky();
+            if (unluckyEffect != null) {
+                String effectDescription = unluckyEffect.apply(player);
+                EffectUtils.broadcastEffectMessage(player, effectDescription, unluckyEffect.getRarity(), false);
+            }
+            return;
+        }
+        
+        // 通常のラッキー保証
         player.sendMessage(ChatColor.GOLD + "✨ 将来保証が発動！ " + LUCKY_MESSAGE);
         
         // 保証された効果を実行
@@ -360,6 +364,8 @@ public class LuckyBoxItem extends AbstractCustomItemV2 {
                 return effectRegistry.getEffect("multi_buff_combination");
             case FUTURE_VISION:
                 return effectRegistry.getEffect("future_vision");
+            case MALPHITE_ULT:
+                return effectRegistry.getEffect("malphite_ult");
             default:
                 return effectRegistry.getRandomLucky();
         }
